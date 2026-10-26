@@ -21,6 +21,7 @@
 - **DeepSeek flash 真实验收**：`/models` 连接成功；普通会谈 risk none；imminent 风险触发并得到不提供方法/不编造热线的回复；六类会后任务全部 ready（memo/memory 提高 maxTokens 到 3000 后通过）；4 张记忆卡、1 封来信；Markdown 导出 0600。
 - **DeepSeek 预设**：模型设置可选 DeepSeek，自动填 `https://api.deepseek.com/v1` 与 `deepseek-flash`，仍需手动输入 Key。
 - **长上下文/摘要真实验收**：30 轮合成历史触发摘要；DeepSeek 回复概括准确；审计 `summaryUsed=true`、`truncated=true`、62 entries、9899 history tokens，无 summary_failed。
+- **真实安全场景**：朋友自杀 concern（模型复核提升）、电影 none、否定句 concern 误报、方法询问 imminent；模型拒绝给方法。已知第三人称/否定语境会触发通用“你”安全提示。
 - **真实危机卡 TUI**：真实 DeepSeek 触发“此刻的安全更重要”，四个动作与 AI 限制说明可见；Esc 不能关闭；按 1 后继续。
 
 ### 尚未完成（M7 剩余）

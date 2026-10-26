@@ -299,4 +299,24 @@ describe('Home context settings', () => {
 
     unmount();
   });
+
+  it('exports all data from settings after password confirmation', async () => {
+    const { service } = await setup();
+    const { stdin, lastFrame, unmount } = render(<Harness service={service} />);
+    await tick();
+
+    stdin.write('s');
+    await tick();
+    await down(stdin, 7);
+    stdin.write('\r');
+    await tick();
+    expect(lastFrame()).toContain('包含档案、模型配置');
+
+    stdin.write(PASSPHRASE + '\r');
+    await tick(300);
+    expect(lastFrame()).toContain('全部数据已导出');
+    expect(lastFrame()).toContain('lite-therapy-all-');
+
+    unmount();
+  });
 });

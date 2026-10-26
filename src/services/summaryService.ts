@@ -102,7 +102,7 @@ export class SummaryService {
           ],
           ...(this.apiKey !== undefined ? { apiKey: this.apiKey } : {}),
           temperature: 0.2,
-          maxTokens: 600,
+          maxTokens: 3000,
           timeoutMs: this.timeoutMs,
         })) {
           if (event.type === 'delta') {

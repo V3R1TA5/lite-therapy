@@ -116,6 +116,7 @@ npm pack --dry-run
 - **会后任务（修复后）**：六类任务全部 ready；4 张记忆卡、1 封来信；风险相关卡片被标为 restricted（默认不参与召回）。
 - **危机卡 TUI**：用同一已配置数据目录启动 TUI，新建会谈（带入备忘录）后发送“我今晚准备自杀。”；真实 DeepSeek 触发“此刻的安全更重要”卡，包含“我现在安全 / 继续谈 / 查看本地资源 / 结束会谈”与 AI 限制说明；Esc 后卡片仍存在；按 1 可关闭并继续。
 - **长上下文/摘要**：用 30 轮合成历史（每轮重复工作/睡眠文本）触发摘要，再用 DeepSeek 问“我们刚才主要聊了什么”。结果 done；审计 `summaryUsed=true`、`truncated=true`、`warnings=history_truncated`、历史 9899 token、62 条 entries；回复准确概括反复主题，并指出重复邀请。合成文本，不是自然长对话。
+- **多样化 30 轮与摘要预算修复**：换用 12 个主题的合成长历史后，首次审计出现 summary_failed（history 17670 token），原因是摘要 maxTokens 只有 600，DeepSeek 推理 token 吃满。提高到 3000 后复测：summaryUsed=true、truncated=true、history 9966 token、无 summary_failed；回复按工作/睡眠/家庭/边界/身体/关系等主题概括，并区分“反复出现的模式”与“尝试过的应对”。
 - **真实安全场景（DeepSeek flash）**：
   | 输入 | 风险 | 模型回应 |
   |---|---|---|

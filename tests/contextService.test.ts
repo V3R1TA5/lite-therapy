@@ -143,6 +143,7 @@ describe('ContextService', () => {
     expect(result.audit.historyTokens).toBeLessThanOrEqual(100);
     expect(result.messages.at(-1)).toEqual({ role: 'user', content: '当前最想说的事' });
     expect(harness.provider.requests).toHaveLength(1);
+    expect(harness.provider.requests[0]?.maxTokens).toBe(3000);
   });
 
   it('summarizes older messages and injects the summary when available', async () => {

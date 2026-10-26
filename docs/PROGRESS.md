@@ -20,7 +20,7 @@
 - **CI**：Node 22/24 上跑 typecheck、lint、test、build、doctor，并加入 eval:safety、许可证、密钥与 npm pack --dry-run。
 - **DeepSeek flash 真实验收**：`/models` 连接成功；普通会谈 risk none；imminent 风险触发并得到不提供方法/不编造热线的回复；六类会后任务全部 ready（memo/memory 提高 maxTokens 到 3000 后通过）；4 张记忆卡、1 封来信；Markdown 导出 0600。
 - **DeepSeek 预设**：模型设置可选 DeepSeek，自动填 `https://api.deepseek.com/v1` 与 `deepseek-flash`，仍需手动输入 Key。
-- **长上下文/摘要真实验收**：30 轮合成历史触发摘要；DeepSeek 回复概括准确；审计 `summaryUsed=true`、`truncated=true`、62 entries、9899 history tokens，无 summary_failed。
+- **长上下文/摘要真实验收**：30 轮合成历史触发摘要；DeepSeek 回复概括准确；审计 `summaryUsed=true`、`truncated=true`、62 entries、9899 history tokens。多样化 30 轮首次出现 `summary_failed`（17670 token），摘要 maxTokens 从 600 提到 3000 后复测 `summaryUsed=true`、9966 token、无失败。
 - **真实安全场景**：朋友自杀 concern、电影 none、方法询问 imminent；否定句首次 concern，修正否定识别后真实复测 none。第三人称/否定-only concern 使用非阻断提示。
 - **恢复/彻底删除副本演练**：真实数据目录副本上完成备份→标记会谈→恢复→标记消失→解锁→彻底删除，data/config/log 全部移除。
 - **真实危机卡 TUI**：真实 DeepSeek 触发“此刻的安全更重要”，四个动作与 AI 限制说明可见；Esc 不能关闭；按 1 后继续。
@@ -190,7 +190,7 @@
 
 ### 尚未完成（M3 收尾）
 
-- **真实模型验收**：尚未用真实 provider 跑长会谈、摘要、危机卡与分类失败场景；目前全部使用 fake。
+- **真实模型验收**：DeepSeek 已跑短会谈、危机卡、六类会后、合成摘要与安全场景；自然长对话、分类失败与 IME 未验。
 - **安全 UI 打磨**：锁定 / 自动锁定仍可暂时离开危机卡；解锁后只保留风险标记，不自动重开卡片。检测有漏报与误报，卡片不是保证。
 - **测试补强**：更多否定 / 影视 / 第三人称组合；分类模型超时、解析失败与跨轮升级的 PTY 场景；资源文件权限与损坏情况。
 - **M4 仍在进行**：会后 5/6 任务、备忘录带入、来信信箱、进度页与内部记录页已完成；常驻 worker 与记忆提取仍待做。

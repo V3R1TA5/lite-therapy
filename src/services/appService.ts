@@ -31,6 +31,7 @@ import {
 import { writeFileAtomic } from '../config/atomicFile.js';
 import type { AppPaths } from '../config/paths.js';
 import { getAppPaths } from '../config/paths.js';
+import { normalizeBaseUrl } from '../core/endpoint.js';
 import { ModelRiskClassifier } from '../core/safety/classifier.js';
 import { AI_DISCLOSURE, APP_NAME, APP_VERSION, DISCLAIMER } from '../core/version.js';
 import { backupDatabase } from '../db/backup.js';
@@ -728,6 +729,7 @@ export class AppService {
     const provider = this.chatProviderFactory
       ? this.chatProviderFactory(profile, apiKey)
       : new OpenAICompatibleProvider();
+    const embedding = this.embeddingRuntime(profile);
     return new PostSessionService({
       db: this.db,
       sessions: this.sessions,
@@ -738,6 +740,9 @@ export class AppService {
       ...(this.config?.memory.embeddingModel
         ? { embeddingModel: this.config.memory.embeddingModel }
         : {}),
+      embeddingProvider: embedding.provider,
+      embeddingProfile: embedding.profile,
+      ...(embedding.apiKey !== undefined ? { embeddingApiKey: embedding.apiKey } : {}),
       now: this.now,
       ...(this.postSessionRetryDelaysMs !== undefined
         ? { retryDelaysMs: this.postSessionRetryDelaysMs }
@@ -870,6 +875,38 @@ export class AppService {
     );
   }
 
+  private embeddingRuntime(profile: ModelProfile): {
+    provider: ChatProvider;
+    profile: ModelProfile;
+    apiKey?: string | null;
+  } {
+    const baseUrl = this.config?.memory.embeddingBaseUrl.trim() ?? '';
+    if (baseUrl.length > 0) {
+      const embeddingProfile: ModelProfile = {
+        ...profile,
+        id: profile.id + ':embedding',
+        label: 'Embedding',
+        kind: 'openai-compatible',
+        baseUrl,
+      };
+      return {
+        provider: this.chatProviderFactory
+          ? this.chatProviderFactory(embeddingProfile, undefined)
+          : new OpenAICompatibleProvider(),
+        profile: embeddingProfile,
+        apiKey: null,
+      };
+    }
+    const apiKey = this.apiKeys[profile.id];
+    return {
+      provider: this.chatProviderFactory
+        ? this.chatProviderFactory(profile, apiKey)
+        : new OpenAICompatibleProvider(),
+      profile,
+      apiKey: apiKey ?? null,
+    };
+  }
+
   hasModel(): boolean {
     return this.getActiveModelProfile() !== null;
   }
@@ -988,6 +1025,7 @@ export class AppService {
     if (profile === null || !this.config?.memory.embeddingModel || this.db === null) {
       return 0;
     }
+    const embedding = this.embeddingRuntime(profile);
     const service = new MemoryService({
       db: this.db,
       provider: this.chatProviderFactory
@@ -996,6 +1034,9 @@ export class AppService {
       profile,
       ...(this.apiKeys[profile.id] !== undefined ? { apiKey: this.apiKeys[profile.id] } : {}),
       embeddingModel: this.config.memory.embeddingModel,
+      embeddingProvider: embedding.provider,
+      embeddingProfile: embedding.profile,
+      ...(embedding.apiKey !== undefined ? { embeddingApiKey: embedding.apiKey } : {}),
       now: this.now,
       timeoutMs: 180_000,
     });
@@ -1087,11 +1128,14 @@ export class AppService {
     if (base === null) {
       throw new AppServiceError('NOT_UNLOCKED', '配置尚未加载。');
     }
+    const embeddingBaseUrl = settings.embeddingBaseUrl.trim();
     const next = parseAppConfig({
       ...base,
       memory: {
         enabled: settings.enabled,
         includeSensitive: settings.includeSensitive,
+        embeddingModel: settings.embeddingModel.trim(),
+        embeddingBaseUrl: embeddingBaseUrl.length > 0 ? normalizeBaseUrl(embeddingBaseUrl) : '',
       },
     });
     saveAppConfig(this.configPath, next);
@@ -1188,6 +1232,7 @@ export class AppService {
     const provider = this.chatProviderFactory
       ? this.chatProviderFactory(profile, apiKey)
       : new OpenAICompatibleProvider();
+    const embedding = this.embeddingRuntime(profile);
     const safety =
       this.safetyEvaluatorFactory !== undefined
         ? this.safetyEvaluatorFactory(sessionId)
@@ -1220,6 +1265,9 @@ export class AppService {
       ...(this.config?.memory.embeddingModel
         ? { embeddingModel: this.config.memory.embeddingModel }
         : {}),
+      embeddingProvider: embedding.provider,
+      embeddingProfile: embedding.profile,
+      ...(embedding.apiKey !== undefined ? { embeddingApiKey: embedding.apiKey } : {}),
       memoryService: new MemoryService({
         db: this.db,
         provider,
@@ -1228,6 +1276,9 @@ export class AppService {
         ...(this.config?.memory.embeddingModel
           ? { embeddingModel: this.config.memory.embeddingModel }
           : {}),
+        embeddingProvider: embedding.provider,
+        embeddingProfile: embedding.profile,
+        ...(embedding.apiKey !== undefined ? { embeddingApiKey: embedding.apiKey } : {}),
         now: this.now,
         timeoutMs: 180_000,
       }),

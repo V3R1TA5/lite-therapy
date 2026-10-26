@@ -87,6 +87,9 @@ export interface PostSessionServiceOptions {
   timeoutMs?: number;
   retryDelaysMs?: number[];
   embeddingModel?: string;
+  embeddingProvider?: ChatProvider;
+  embeddingProfile?: ModelProfile;
+  embeddingApiKey?: string | null;
 }
 
 export interface RunPostSessionResult {
@@ -133,6 +136,15 @@ export class PostSessionService {
       newId: this.newId,
       timeoutMs: this.timeoutMs,
       ...(options.embeddingModel !== undefined ? { embeddingModel: options.embeddingModel } : {}),
+      ...(options.embeddingProvider !== undefined
+        ? { embeddingProvider: options.embeddingProvider }
+        : {}),
+      ...(options.embeddingProfile !== undefined
+        ? { embeddingProfile: options.embeddingProfile }
+        : {}),
+      ...(options.embeddingApiKey !== undefined
+        ? { embeddingApiKey: options.embeddingApiKey }
+        : {}),
     });
   }
 

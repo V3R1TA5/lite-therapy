@@ -55,6 +55,7 @@ type View =
   | 'memories'
   | 'memorySettings'
   | 'memoryEmbedding'
+  | 'memoryEmbeddingBaseUrl'
   | 'backupPassword'
   | 'backupResult'
   | 'exportAllPassword'
@@ -153,6 +154,7 @@ export function HomeScreen(props: HomeScreenProps) {
   const [exportAllPath, setExportAllPath] = useState('');
   const [exportAllRunning, setExportAllRunning] = useState(false);
   const [memoryEmbeddingInput, setMemoryEmbeddingInput] = useState('');
+  const [memoryEmbeddingBaseUrlInput, setMemoryEmbeddingBaseUrlInput] = useState('');
   const [backfilling, setBackfilling] = useState(false);
   const [backups, setBackups] = useState<ManualBackupSummary[]>([]);
   const [selectedBackup, setSelectedBackup] = useState<ManualBackupSummary | null>(null);
@@ -920,6 +922,41 @@ export function HomeScreen(props: HomeScreenProps) {
     );
   }
 
+  if (view === 'memoryEmbeddingBaseUrl') {
+    return (
+      <ScreenFrame title={messages.settings.memoryEmbeddingBaseUrl} footer="Enter 保存 · Esc 返回">
+        <Text wrap="wrap" dimColor>
+          {messages.settings.memoryEmbeddingBaseUrlHint}
+        </Text>
+        <Box marginTop={1}>
+          <SingleLineInput
+            value={memoryEmbeddingBaseUrlInput}
+            onChange={setMemoryEmbeddingBaseUrlInput}
+            onSubmit={(value) => {
+              void service
+                .updateMemorySettings({
+                  ...config.memory,
+                  embeddingBaseUrl: value.trim(),
+                })
+                .then((updated) => {
+                  onConfigChange(updated);
+                  setNotice(messages.settings.memoryEmbeddingSaved);
+                  setView('memorySettings');
+                })
+                .catch((saveError: unknown) => {
+                  setError(errorMessage(saveError));
+                });
+            }}
+            onEscape={() => setView('memorySettings')}
+            placeholder={messages.settings.memoryEmbeddingBaseUrlPlaceholder}
+          />
+        </Box>
+        {notice.length > 0 ? <Text color={uiColor('success')}>{notice}</Text> : null}
+        {error.length > 0 ? <Text color={uiColor('danger')}>{error}</Text> : null}
+      </ScreenFrame>
+    );
+  }
+
   if (view === 'memorySettings') {
     return (
       <ScreenFrame
@@ -958,6 +995,15 @@ export function HomeScreen(props: HomeScreenProps) {
                     ? config.memory.embeddingModel
                     : messages.settings.memoryEmbeddingOff),
               },
+              {
+                value: 'embeddingBaseUrl' as const,
+                label:
+                  messages.settings.memoryEmbeddingBaseUrl +
+                  '：' +
+                  (config.memory.embeddingBaseUrl.length > 0
+                    ? config.memory.embeddingBaseUrl
+                    : messages.settings.memoryEmbeddingOff),
+              },
               { value: 'backfill' as const, label: messages.settings.memoryBackfill },
               { value: 'back' as const, label: messages.common.back },
             ]}
@@ -991,6 +1037,11 @@ export function HomeScreen(props: HomeScreenProps) {
                 go('memoryEmbedding');
                 return;
               }
+              if (value === 'embeddingBaseUrl') {
+                setMemoryEmbeddingBaseUrlInput(config.memory.embeddingBaseUrl);
+                go('memoryEmbeddingBaseUrl');
+                return;
+              }
               const next = {
                 enabled: value === 'enabled' ? !config.memory.enabled : config.memory.enabled,
                 includeSensitive:
@@ -998,6 +1049,7 @@ export function HomeScreen(props: HomeScreenProps) {
                     ? !config.memory.includeSensitive
                     : config.memory.includeSensitive,
                 embeddingModel: config.memory.embeddingModel,
+                embeddingBaseUrl: config.memory.embeddingBaseUrl,
               };
               void service
                 .updateMemorySettings(next)

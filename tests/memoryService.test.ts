@@ -335,23 +335,34 @@ describe('MemoryService', () => {
       textHash: memoryTextHash('敏感的工作压力'),
       sensitivity: 'sensitive',
     });
-    const provider = {
+    const chatProvider = {
       async *stream() {
         yield { type: 'done' as const };
       },
-      async embed(request: { input: string[] }) {
+    };
+    let embeddingBaseUrl = '';
+    const embeddingProvider = {
+      async *stream() {
+        yield { type: 'done' as const };
+      },
+      async embed(request: { input: string[]; profile: { baseUrl: string } }) {
+        embeddingBaseUrl = request.profile.baseUrl;
         return request.input.map(() => [0.5, 0.5]);
       },
     };
     const service = new MemoryService({
       db: harness.db,
-      provider,
+      provider: chatProvider,
       profile: PROFILE,
+      embeddingProvider,
+      embeddingProfile: { ...PROFILE, baseUrl: 'http://127.0.0.1:11434/v1' },
+      embeddingApiKey: null,
       embeddingModel: 'embed-test',
       now: () => new Date('2026-10-26T12:00:00.000Z'),
       timeoutMs: 1000,
     });
     await expect(service.backfillEmbeddings()).resolves.toBe(1);
+    expect(embeddingBaseUrl).toBe('http://127.0.0.1:11434/v1');
     expect(getMemoryCard(harness.db, 'normal-card')?.embedding).toEqual([0.5, 0.5]);
     expect(getMemoryCard(harness.db, 'sensitive-card')?.embedding).toBeNull();
   });

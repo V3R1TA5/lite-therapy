@@ -39,6 +39,9 @@ export interface MemoryServiceOptions {
   provider?: ChatProvider;
   profile?: ModelProfile;
   apiKey?: string;
+  embeddingProvider?: ChatProvider;
+  embeddingProfile?: ModelProfile;
+  embeddingApiKey?: string | null;
   now?: () => Date;
   newId?: () => string;
   timeoutMs?: number;
@@ -161,6 +164,9 @@ export class MemoryService {
   private readonly provider?: ChatProvider;
   private readonly profile?: ModelProfile;
   private readonly apiKey?: string;
+  private readonly embeddingProvider?: ChatProvider;
+  private readonly embeddingProfile?: ModelProfile;
+  private readonly embeddingApiKey?: string | null;
   private readonly now: () => Date;
   private readonly newId: () => string;
   private readonly timeoutMs: number;
@@ -171,10 +177,46 @@ export class MemoryService {
     this.provider = options.provider;
     this.profile = options.profile;
     this.apiKey = options.apiKey;
+    this.embeddingProvider = options.embeddingProvider;
+    this.embeddingProfile = options.embeddingProfile;
+    this.embeddingApiKey = options.embeddingApiKey;
     this.now = options.now ?? (() => new Date());
     this.newId = options.newId ?? (() => randomUUID());
     this.timeoutMs = options.timeoutMs ?? 300_000;
     this.embeddingModel = options.embeddingModel?.trim() ?? '';
+  }
+
+  private embeddingRuntime(): { provider: ChatProvider; profile: ModelProfile } | null {
+    const provider = this.embeddingProvider ?? this.provider;
+    const profile = this.embeddingProfile ?? this.profile;
+    if (
+      this.embeddingModel.length === 0 ||
+      provider?.embed === undefined ||
+      profile === undefined
+    ) {
+      return null;
+    }
+    return { provider, profile };
+  }
+
+  private async embedTexts(input: string[]): Promise<number[][]> {
+    const runtime = this.embeddingRuntime();
+    if (runtime === null) {
+      throw new Error('没有配置向量模型。');
+    }
+    const apiKey =
+      this.embeddingApiKey === undefined
+        ? this.apiKey
+        : this.embeddingApiKey === null
+          ? undefined
+          : this.embeddingApiKey;
+    return await runtime.provider.embed!({
+      profile: runtime.profile,
+      model: this.embeddingModel,
+      input,
+      ...(apiKey !== undefined ? { apiKey } : {}),
+      timeoutMs: this.timeoutMs,
+    });
   }
 
   async extract(sessionId: string): Promise<MemoryCardRecord[]> {
@@ -253,21 +295,10 @@ export class MemoryService {
       pending.push(card);
     }
 
-    if (
-      pending.length > 0 &&
-      this.embeddingModel.length > 0 &&
-      this.provider?.embed !== undefined &&
-      this.profile !== undefined
-    ) {
+    if (pending.length > 0 && this.embeddingRuntime() !== null) {
       try {
         const embeddable = pending.filter((card) => card.sensitivity === 'normal');
-        const vectors = await this.provider.embed({
-          profile: this.profile,
-          model: this.embeddingModel,
-          input: embeddable.map((card) => card.text),
-          ...(this.apiKey !== undefined ? { apiKey: this.apiKey } : {}),
-          timeoutMs: this.timeoutMs,
-        });
+        const vectors = await this.embedTexts(embeddable.map((card) => card.text));
         if (vectors.length === embeddable.length) {
           embeddable.forEach((card, index) => {
             card.embedding = vectors[index] ?? null;
@@ -300,11 +331,7 @@ export class MemoryService {
   }
 
   async backfillEmbeddings(limit = 50): Promise<number> {
-    if (
-      this.embeddingModel.length === 0 ||
-      this.provider?.embed === undefined ||
-      this.profile === undefined
-    ) {
+    if (this.embeddingRuntime() === null) {
       return 0;
     }
     const cards = listMemoryCards(this.db, { status: 'active', limit: 200 })
@@ -313,13 +340,7 @@ export class MemoryService {
     if (cards.length === 0) {
       return 0;
     }
-    const vectors = await this.provider.embed({
-      profile: this.profile,
-      model: this.embeddingModel,
-      input: cards.map((card) => card.text),
-      ...(this.apiKey !== undefined ? { apiKey: this.apiKey } : {}),
-      timeoutMs: this.timeoutMs,
-    });
+    const vectors = await this.embedTexts(cards.map((card) => card.text));
     if (vectors.length !== cards.length) {
       throw new Error('向量数量与记忆数量不一致。');
     }
@@ -350,19 +371,9 @@ export class MemoryService {
     let queryVector: number[] | null = null;
     let usedEmbedding = false;
 
-    if (
-      this.embeddingModel.length > 0 &&
-      this.provider?.embed !== undefined &&
-      this.profile !== undefined
-    ) {
+    if (this.embeddingRuntime() !== null) {
       try {
-        const vectors = await this.provider.embed({
-          profile: this.profile,
-          model: this.embeddingModel,
-          input: [query.slice(-6000)],
-          ...(this.apiKey !== undefined ? { apiKey: this.apiKey } : {}),
-          timeoutMs: this.timeoutMs,
-        });
+        const vectors = await this.embedTexts([query.slice(-6000)]);
         queryVector = vectors[0] ?? null;
       } catch {
         queryVector = null;

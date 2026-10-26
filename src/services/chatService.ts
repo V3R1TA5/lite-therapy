@@ -68,6 +68,9 @@ export interface ChatServiceOptions {
   memoryEnabled?: boolean;
   includeSensitiveMemory?: boolean;
   embeddingModel?: string;
+  embeddingProvider?: ChatProvider;
+  embeddingProfile?: ModelProfile;
+  embeddingApiKey?: string | null;
   contextBudgets?: Partial<ContextBudgets>;
   contextService?: ContextService;
   memoryService?: MemoryService;
@@ -176,6 +179,15 @@ export class ChatService {
         profile: options.profile,
         ...(options.apiKey !== undefined ? { apiKey: options.apiKey } : {}),
         ...(options.embeddingModel !== undefined ? { embeddingModel: options.embeddingModel } : {}),
+        ...(options.embeddingProvider !== undefined
+          ? { embeddingProvider: options.embeddingProvider }
+          : {}),
+        ...(options.embeddingProfile !== undefined
+          ? { embeddingProfile: options.embeddingProfile }
+          : {}),
+        ...(options.embeddingApiKey !== undefined
+          ? { embeddingApiKey: options.embeddingApiKey }
+          : {}),
         now: this.now,
         newId: this.newId,
       });

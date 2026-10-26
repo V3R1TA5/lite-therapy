@@ -38,12 +38,14 @@ export interface MemorySettings {
   enabled: boolean;
   includeSensitive: boolean;
   embeddingModel: string;
+  embeddingBaseUrl: string;
 }
 
 export const DEFAULT_MEMORY_SETTINGS: MemorySettings = {
   enabled: true,
   includeSensitive: false,
   embeddingModel: '',
+  embeddingBaseUrl: '',
 };
 
 export interface ContextBudgetSettings {
@@ -195,6 +197,7 @@ const appConfigSchema = z
         enabled: z.boolean().default(true),
         includeSensitive: z.boolean().default(false),
         embeddingModel: z.string().trim().max(100).default(''),
+        embeddingBaseUrl: z.string().trim().max(500).default(''),
       })
       .default(DEFAULT_MEMORY_SETTINGS),
   })

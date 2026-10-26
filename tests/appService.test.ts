@@ -111,12 +111,21 @@ describe('AppService', () => {
       enabled: false,
       includeSensitive: true,
       embeddingModel: '',
+      embeddingBaseUrl: '',
     });
     expect(memoryUpdated.memory).toEqual({
       enabled: false,
       includeSensitive: true,
       embeddingModel: '',
+      embeddingBaseUrl: '',
     });
+    const embeddingUpdated = await service.updateMemorySettings({
+      ...memoryUpdated.memory,
+      embeddingModel: 'nomic-embed-text',
+      embeddingBaseUrl: 'http://127.0.0.1:11434/v1/',
+    });
+    expect(embeddingUpdated.memory.embeddingModel).toBe('nomic-embed-text');
+    expect(embeddingUpdated.memory.embeddingBaseUrl).toBe('http://127.0.0.1:11434/v1');
     expect(config.profile.displayName).toBe('小林');
     expect(config.models.activeProfileId).toBe('openai-main');
     expect(service.readProfile()?.timezone).toBe('Asia/Tokyo');

@@ -519,7 +519,11 @@ export const messages = {
     memorySensitive: '敏感记忆参与召回',
     memoryEmbedding: '向量模型',
     memoryEmbeddingHint:
-      '填写 OpenAI 兼容的 embedding 模型名后，新建记忆会发送文本到当前 provider 生成向量并用于召回。留空关闭；旧卡片不会自动补向量。',
+      '填写 OpenAI 兼容的 embedding 模型名后，新建记忆会发送文本生成向量并用于召回。留空关闭；旧卡片可在记忆设置里手动回填。',
+    memoryEmbeddingBaseUrl: '向量服务地址',
+    memoryEmbeddingBaseUrlHint:
+      '可填本地 Ollama 的 OpenAI 兼容地址，例如 http://127.0.0.1:11434/v1。留空则复用当前聊天模型端点。使用独立地址时不会把聊天 API Key 发给该服务。',
+    memoryEmbeddingBaseUrlPlaceholder: 'http://127.0.0.1:11434/v1',
     memoryEmbeddingSaved: '向量模型设置已更新。',
     memoryBackfill: '回填旧记忆向量',
     memoryBackfillDone: (count: number) => '已回填 ' + count + ' 条记忆的向量。',

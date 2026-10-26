@@ -105,6 +105,7 @@ export XDG_CACHE_HOME="$PWD/.cache"
 - 新增安全规则时同时补否定/影视/第三人称/过去时测试，避免把“朋友说他想自杀”误判为用户当下风险。否定-only 与第三人称 concern 在 ChatScreen 用非阻断提示；不要移除“不想”前的 `(?<!想)`，否则“我不确定想不想自杀”会被误判为否定。
 - 会后任务不要记录或打印会谈正文；错误信息截断。备忘录只有通过五段结构校验才写 ready。
 - 记忆卡来源必须在当前会谈消息 ID 集合中；不要为了让提取“成功”放宽来源校验。
+- 记忆可配置独立 embedding 端点（`memory.embeddingBaseUrl`）；独立端点时不要发送聊天 API Key。更新记忆设置必须保留 embeddingModel/embeddingBaseUrl，否则会静默丢失配置。
 - 编辑记忆会写 memory_card_revisions（008）；历史文本是敏感数据，仍只存在本机。
 - 记忆库 UI 在 src/ui/screens/MemoriesScreen.tsx：编辑/归档/删除只动本机卡片；全局关闭后 ChatService 不召回，但卡片仍保留。
 - 备份/恢复在 AppService.createBackup / restoreBackup：备份用 VACUUM INTO + vault/config 复制，不含 secrets.enc；恢复前生成 pre-restore 安全备份并锁屏。

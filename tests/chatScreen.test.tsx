@@ -356,4 +356,44 @@ describe('App chat entry', () => {
 
     unmount();
   });
+
+  it('shows a notice when the latest context audit reports summary failure', async () => {
+    const { service } = await setup([[{ type: 'delta', text: '我在听。' }, { type: 'done' }]]);
+    const session = service.createSession();
+    vi.spyOn(service, 'listContextAudits').mockReturnValue([
+      {
+        id: 'audit-1',
+        sessionId: session.id,
+        messageId: null,
+        promptTokens: 10,
+        historyTokens: 10,
+        historyMessages: 1,
+        truncated: true,
+        summaryUsed: false,
+        memoUsed: false,
+        memoryUsed: false,
+        warnings: ['summary_failed'],
+        entries: [],
+        createdAt: '2026-10-26T12:00:00.000Z',
+      },
+    ]);
+    const { stdin, lastFrame, unmount } = render(
+      <ChatScreen
+        service={service}
+        sessionId={session.id}
+        onExit={vi.fn()}
+        onLock={vi.fn()}
+        onQuit={vi.fn()}
+      />,
+    );
+    await tick();
+
+    stdin.write('最近有点累');
+    await tick();
+    stdin.write('\r');
+    await tick(300);
+    expect(lastFrame()).toContain(messages.chat.summaryFailedNotice);
+
+    unmount();
+  });
 });

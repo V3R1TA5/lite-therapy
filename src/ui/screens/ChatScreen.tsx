@@ -254,6 +254,11 @@ export function ChatScreen(props: ChatScreenProps) {
         setNotice(messages.chat.stopped);
       } else if (result.status === 'error' && result.error !== undefined) {
         setError(result.error);
+      } else if (result.status === 'done') {
+        const latestAudit = service.listContextAudits(sessionId, 1)[0];
+        if (latestAudit?.warnings.includes('summary_failed')) {
+          setNotice(messages.chat.summaryFailedNotice);
+        }
       }
       refresh();
     } catch (streamError) {

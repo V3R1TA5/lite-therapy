@@ -114,13 +114,13 @@ npm pack --dry-run
 - **会后任务（首次）**：session_note / case_formulation / supervision / letter ready；memo 与 memory 连续 3 次“模型没有返回内容 / 没有 JSON 数组”。
 - **诊断与修复**：memo 与 memory 的 maxTokens 原为 1000/1500；DeepSeek flash 的推理 token 很可能占满预算。提高为 3000 后重试，两项均 ready。是否为唯一原因未逐 token 验证。
 - **会后任务（修复后）**：六类任务全部 ready；4 张记忆卡、1 封来信；风险相关卡片被标为 restricted（默认不参与召回）。
-- **导出**：Markdown 文件 0600，含免责声明与 AI 披露，不含 API Key。
-- **未覆盖**：长上下文/摘要、真实危机卡 UI、真实中文 IME 候选框、真实 embedding（DeepSeek /models 没有 embedding 模型）、恢复/彻底删除真机演练。
+- **危机卡 TUI**：用同一已配置数据目录启动 TUI，新建会谈（带入备忘录）后发送“我今晚准备自杀。”；真实 DeepSeek 触发“此刻的安全更重要”卡，包含“我现在安全 / 继续谈 / 查看本地资源 / 结束会谈”与 AI 限制说明；Esc 后卡片仍存在；按 1 可关闭并继续。
+- **未覆盖**：长上下文/摘要、真实中文 IME 候选框、真实 embedding（DeepSeek /models 没有 embedding 模型）、恢复/彻底删除真机演练。
 - **产品预设**：模型设置新增 DeepSeek 预设，自动填 base URL 与 `deepseek-flash`，仍需手动输入 Key。
 
 ## 6. 当前结论
 
-- 本地测试与 fake provider 覆盖已完成；DeepSeek flash 短会谈已验收，长上下文/摘要/真实危机卡 UI 未验收。
+- 本地测试与 fake provider 覆盖已完成；DeepSeek flash 短会谈与真实危机卡 TUI 已验收，长上下文/摘要未验收。
 - 已用真实 PTY（80×24）完成一轮主题/NO_COLOR 视觉验收：
   - 设置页切换浅色后 config.toml 写入 theme = "light"；
   - 浅色界面输出 truecolor ANSI；

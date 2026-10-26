@@ -1,6 +1,6 @@
 # Lite Therapy — 交接档
 
-> 状态：M3 技术完成；DeepSeek flash 短会谈真实模型验收通过，长上下文/摘要/危机卡 UI 待验收；M4 会后队列 6/6；M5 可选 embedding 已接；M6 技术完成；M7 评估进行中
+> 状态：M3 技术完成；DeepSeek flash 短会谈与危机卡 TUI 真实验收通过，长上下文/摘要待验收；M4 会后队列 6/6；M5 可选 embedding 已接；M6 技术完成；M7 评估进行中
 > 更新：2026-10-26
 > 仓库标识：lite-therapy
 > 产品名：Lite Therapy
@@ -72,7 +72,7 @@ cd lite-therapy
 
 现在还不能：
 
-- 真实模型长会谈/摘要/危机卡 UI 验收；DeepSeek flash 短会谈已验，但不能据此说“安全”。
+- 真实模型长会谈/摘要验收；DeepSeek flash 短会谈与危机卡 UI 已验，但不能据此说“安全”。
 - **M4 完成 6/6 个会后任务**：记忆提取由 M5 接入；结束即后台 worker、退出最多等 2 秒、解锁自动续跑、整理进度页、单任务重试、5s/20s/60s 退避、启动 running→queued、备忘录带入、来信信箱与内部记录只读页已接。
 - 记忆：记忆卡提取/召回/记忆库/开关/导出勾选/冲突确认/历史版本/覆盖率评分/可选 embedding 召回/手动回填已接；敏感卡不发送向量请求。
 - IME 真实终端视觉验收；备份、恢复、彻底删除、JSON 导出、主页命令面板、主题/NO_COLOR、真实光标已接。
@@ -168,7 +168,7 @@ NODE_ENV=development npm install --include=dev
 - **预算设置**：AppConfig.context（history / summaryTrigger / recentTarget）；设置页提供精简 / 保守 / 更长三档；ChatService 按配置注入预算。
 - **审计查看**：设置页「最近上下文审计」只展示时间、token、消息数、裁剪/摘要、消息条目计数与警告，不显示正文。
 - **测试**：prompts（4）、safetyRules（9）、riskClassifier（3）、safetyService（7）、crisisResources（4）、crisisCard TUI（2）、contextService（7）、homeContext TUI（1）、chatService 安全/审计集成（2）、sessionService 快照/上限（2）等。
-- **DeepSeek flash 真实验收（2026-10-26）**：`/models` 连接成功；普通会谈 risk none；输入“我今晚准备自杀”得到 imminent/suicide，回复不提供方法也不编造热线；六类会后任务全部 ready（memo/memory 在预算从 1000/1500 提到 3000 后通过）；导出 0600。未验收长上下文/摘要/危机卡 UI。
+- **DeepSeek flash 真实验收（2026-10-26）**：`/models` 连接成功；普通会谈 risk none；输入“我今晚准备自杀”得到 imminent/suicide，回复不提供方法也不编造热线；危机卡 TUI 显示四个动作与限制说明，Esc 不能关闭，按 1 可继续；六类会后任务全部 ready（memo/memory 在预算从 1000/1500 提到 3000 后通过）；导出 0600。未验收长上下文/摘要。
 
 ### M2 新增
 
@@ -358,7 +358,7 @@ M3 技术验收已完成：Prompt 分层 / 快照 / legacy、规则 + 模型复�
    - 已加 check:licenses（49 个运行时依赖全部通过）、check:secrets（无命中）与 release:check；CI 已接入 eval/许可证/密钥/pack 检查。
    - 已做 npm pack --dry-run：7 个文件，无数据/密钥。
    - 已做：DeepSeek flash 真实连接、普通会谈、imminent 风险回应、六类会后任务、记忆/来信、导出 0600。
-   - 待做：长上下文/摘要/危机卡 UI、IME 候选框真实验收、git 提交（需用户同意）。
+   - 待做：长上下文/摘要、IME 候选框真实验收；git 首个提交已完成。
 
 ---
 

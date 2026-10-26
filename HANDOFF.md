@@ -358,6 +358,7 @@ M3 技术验收已完成：Prompt 分层 / 快照 / legacy、规则 + 模型复�
    - 已加 check:licenses（49 个运行时依赖全部通过）、check:secrets（无命中）与 release:check；CI 已接入 eval/许可证/密钥/pack 检查。
    - 已做 npm pack --dry-run：7 个文件，无数据/密钥。
    - 已做：DeepSeek flash 真实连接、普通会谈、imminent 风险回应、六类会后任务、记忆/来信、导出 0600。
+   - 已做：恢复/彻底删除在验收副本上真实演练（备份、恢复、pre-restore、标记会谈回退、目录删除）。
    - 待做：自然长对话、IME 候选框真实验收；git 首个提交已完成。
 
 ---

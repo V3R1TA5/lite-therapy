@@ -22,6 +22,7 @@
 - **DeepSeek 预设**：模型设置可选 DeepSeek，自动填 `https://api.deepseek.com/v1` 与 `deepseek-flash`，仍需手动输入 Key。
 - **长上下文/摘要真实验收**：30 轮合成历史触发摘要；DeepSeek 回复概括准确；审计 `summaryUsed=true`、`truncated=true`、62 entries、9899 history tokens，无 summary_failed。
 - **真实安全场景**：朋友自杀 concern、电影 none、方法询问 imminent；否定句首次 concern，修正否定识别后真实复测 none。第三人称/否定-only concern 使用非阻断提示。
+- **恢复/彻底删除副本演练**：真实数据目录副本上完成备份→标记会谈→恢复→标记消失→解锁→彻底删除，data/config/log 全部移除。
 - **真实危机卡 TUI**：真实 DeepSeek 触发“此刻的安全更重要”，四个动作与 AI 限制说明可见；Esc 不能关闭；按 1 后继续。
 
 ### 尚未完成（M7 剩余）

@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { basename, join, relative } from 'node:path';
 
 const SKIP = new Set([
   '.git',
@@ -31,6 +31,10 @@ interface Finding {
 const findings: Finding[] = [];
 
 function scanFile(path: string): void {
+  const base = basename(path);
+  if (base === '.env' || base.startsWith('.env.')) {
+    return;
+  }
   let text: string;
   try {
     const stat = statSync(path);

@@ -18,7 +18,7 @@
 - **lint** 纳入 scripts。
 - **发布检查脚本**：check:licenses 扫描 49 个运行时依赖，全部在许可证 allowlist；check:secrets 扫描仓库，无命中；release:check 串联 check、eval、license、secret、doctor、build。
 - **CI**：Node 22/24 上跑 typecheck、lint、test、build、doctor，并加入 eval:safety、许可证、密钥与 npm pack --dry-run。
-- **DeepSeek flash 真实验收**：`/models` 连接成功；普通会谈 risk none；12 轮多轮会谈均 done/risk none、回应连贯；模型多次主动安全确认但未升级；imminent 风险触发并得到不提供方法/不编造热线的回复；六类会后任务全部 ready（memo/memory 提高 maxTokens 到 3000 后通过）；4 张记忆卡、1 封来信；Markdown 导出 0600。
+- **DeepSeek flash 真实验收**：`/models` 连接成功；普通会谈 risk none；20 轮多轮会谈均 done/risk none、回应连贯；模型多次主动安全确认但未升级；20 轮历史约 4.6k token 时未触发默认摘要，压缩预算到 3k 后真实摘要通过；imminent 风险触发并得到不提供方法/不编造热线的回复；六类会后任务全部 ready（memo/memory 提高 maxTokens 到 3000 后通过）；4 张记忆卡、1 封来信；Markdown 导出 0600。
 - **DeepSeek 预设**：模型设置可选 DeepSeek，自动填 `https://api.deepseek.com/v1` 与 `deepseek-flash`，仍需手动输入 Key；TUI 测试校验预设地址/模型与 Key 提交。
 - **长上下文/摘要真实验收**：30 轮合成历史触发摘要；DeepSeek 回复概括准确；审计 `summaryUsed=true`、`truncated=true`、62 entries、9899 history tokens。多样化 30 轮首次出现 `summary_failed`（17670 token），摘要 maxTokens 从 600 提到 3000 后复测 `summaryUsed=true`、9966 token、无失败；ChatScreen 在最新审计含 summary_failed 时显示非阻断提示。
 - **真实安全场景**：朋友自杀 concern、电影 none、方法询问 imminent；否定句首次 concern，修正否定识别后真实复测 none。第三人称/否定-only concern 使用非阻断提示。

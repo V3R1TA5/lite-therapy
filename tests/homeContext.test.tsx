@@ -5,6 +5,7 @@ import { render } from 'ink-testing-library';
 import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AppPaths } from '../src/config/paths.js';
+import { messages } from '../src/i18n/zh-CN.js';
 import type { ChatProvider } from '../src/providers/types.js';
 import { AppService } from '../src/services/appService.js';
 import { HomeScreen } from '../src/ui/screens/HomeScreen.js';
@@ -316,6 +317,30 @@ describe('Home context settings', () => {
     await tick(300);
     expect(lastFrame()).toContain('全部数据已导出');
     expect(lastFrame()).toContain('lite-therapy-all-');
+
+    unmount();
+  });
+
+  it('saves an independent embedding endpoint from memory settings', async () => {
+    const { service } = await setup();
+    const { stdin, lastFrame, unmount } = render(<Harness service={service} />);
+    await tick();
+
+    stdin.write('s');
+    await tick();
+    await down(stdin, 3);
+    stdin.write('\r');
+    await tick();
+    expect(lastFrame()).toContain(messages.settings.memorySettingsTitle);
+
+    await down(stdin, 3);
+    stdin.write('\r');
+    await tick();
+    expect(lastFrame()).toContain(messages.settings.memoryEmbeddingBaseUrl);
+
+    stdin.write('http://127.0.0.1:11434/v1\r');
+    await tick(300);
+    expect(service.getConfig()?.memory.embeddingBaseUrl).toBe('http://127.0.0.1:11434/v1');
 
     unmount();
   });

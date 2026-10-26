@@ -40,7 +40,7 @@
 - **预算设置与审计查看**：设置页可选择精简 / 保守 / 更长三档；最近上下文审计只显示消息 ID、角色、token、是否进入请求与警告，不显示正文。
 - **备份与恢复**：手动备份加密数据库、vault.json 与 config.toml；可浏览、输入备份密码并二次确认恢复；恢复前自动生成 pre-restore 安全备份。
 - **彻底删除**：警示 → 启动密码 → 输入“彻底删除”短语，删除数据库、vault、配置、日志与手动备份；明确提示 SSD 残留。
-- **验证**：39 个测试文件 / 184 个测试；CLI doctor；真实终端（PTY）+ 本地 fake 模型/分类器完成设置、会谈、危机卡与导出；另有 DeepSeek flash 短会谈、6 轮多轮会谈、合成摘要、安全场景与备份恢复验收，见 docs/EVALUATION.md。
+- **验证**：39 个测试文件 / 185 个测试；CLI doctor；真实终端（PTY）+ 本地 fake 模型/分类器完成设置、会谈、危机卡与导出；另有 DeepSeek flash 短会谈、6 轮多轮会谈、合成摘要、安全场景与备份恢复验收，见 docs/EVALUATION.md。
 
 ## 还不能做什么
 
@@ -105,7 +105,7 @@ npm run doctor
 | npm run build | 构建 dist/cli.js |
 | npm run typecheck | TypeScript 检查 |
 | npm run lint | Biome 检查 |
-| npm test | Vitest（39 个文件 / 184 个测试） |
+| npm test | Vitest（39 个文件 / 185 个测试） |
 | npm run check | typecheck + lint + test |
 | npm run eval:safety | 本地安全规则评估，不调用模型 |
 | npm run check:licenses | 检查运行时依赖许可证 |

@@ -1,0 +1,30 @@
+Lite Therapy
+Copyright 2026 Lite Therapy contributors
+
+This product's design draws on ideas from:
+
+- Open-Ling (https://github.com/Ling-Team/Open-Ling), code licensed under
+  Apache-2.0. We consulted its architecture, prompt layering, context budgeting,
+  session lifecycle, and post-session workflow. No Open-Ling source code is
+  copied in this release, and no counselor names, characters, avatars, logos,
+  or unlicensed documentation are included.
+
+- VCPToolBox (https://github.com/lioensky/VCPToolBox), code and documentation
+  licensed under CC BY-NC-SA 4.0. We consulted its memory system at a conceptual
+  level: tags, source traceability, time decay, deduplication, hybrid recall,
+  and recall logs. No VCPToolBox code, comments, file structure, or prompt text
+  is copied.
+
+Lite Therapy is not affiliated with, endorsed by, or sponsored by the Open-Ling
+or VCPToolBox projects.
+
+Bundled third-party components retain their own licenses:
+
+- better-sqlite3-multiple-ciphers (MIT), SQLite (public domain), and SQLCipher
+  (BSD-style). See the packages and their LICENSE files for details.
+- Ink, React, and other npm dependencies are distributed under their respective
+  licenses. See package-lock.json and each package's LICENSE file.
+
+If this project later copies Apache-2.0 code from Open-Ling, the copied files
+will carry a prominent modification notice, this NOTICE will be updated, and
+the project will remain clearly marked as an unofficial fork or derivative.

@@ -1,0 +1,62 @@
+{
+  "name": "lite-therapy",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Local-first AI counseling in your terminal.",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "lite-therapy": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "scripts": {
+    "dev": "tsx src/cli.tsx",
+    "doctor": "tsx src/cli.tsx doctor",
+    "build": "tsup src/cli.tsx --format esm --clean --out-dir dist",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "biome check src tests spikes scripts",
+    "format": "biome format --write src tests spikes",
+    "check": "npm run typecheck && npm run lint && npm run test",
+    "spike:sqlcipher": "tsx spikes/sqlcipher.ts",
+    "spike:vault": "tsx spikes/vault.ts",
+    "spike:ink": "tsx spikes/ink-shell.tsx",
+    "eval:safety": "tsx scripts/evaluate-safety.ts",
+    "check:licenses": "tsx scripts/check-licenses.ts",
+    "check:secrets": "tsx scripts/check-secrets.ts",
+    "release:check": "npm run check && npm run eval:safety && npm run check:licenses && npm run check:secrets && npm run doctor && npm run build"
+  },
+  "dependencies": {
+    "@scure/bip39": "^2.4.0",
+    "better-sqlite3-multiple-ciphers": "^13.0.3",
+    "commander": "^15.0.0",
+    "env-paths": "^4.0.0",
+    "ink": "^8.0.0",
+    "marked": "^18.1.1",
+    "react": "^19.3.1",
+    "smol-toml": "^1.9.1",
+    "string-width": "^8.3.0",
+    "zod": "^4.6.7",
+    "zustand": "^5.0.16"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.6.3",
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "ink-testing-library": "^4.0.0",
+    "tsup": "^9.0.0",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
+  }
+}

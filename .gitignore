@@ -1,0 +1,14 @@
+node_modules/
+dist/
+coverage/
+.npm-cache/
+.cache/
+.node-gyp/
+.tmp/
+*.db
+*.db-shm
+*.db-wal
+vault.json
+secrets.enc
+.env
+.DS_Store

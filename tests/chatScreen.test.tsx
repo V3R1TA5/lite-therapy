@@ -313,4 +313,47 @@ describe('App chat entry', () => {
 
     unmount();
   });
+
+  it('uses a confirmation notice for a negated concern instead of a crisis card', async () => {
+    const safety: SafetyEvaluator = {
+      evaluate: async (): Promise<SafetyEvaluation> => ({
+        level: 'concern',
+        detector: 'rule+model',
+        category: 'suicide',
+        context: 'negated',
+        contexts: ['negated'],
+        ambiguous: false,
+        classifierFailed: false,
+        ruleCount: 1,
+        confidence: 0.9,
+      }),
+    };
+    const { service } = await setup(
+      [[{ type: 'delta', text: '我先确认你此刻是否安全。' }, { type: 'done' }]],
+      {
+        safety,
+      },
+    );
+    const session = service.createSession();
+    const { stdin, lastFrame, unmount } = render(
+      <ChatScreen
+        service={service}
+        sessionId={session.id}
+        onExit={vi.fn()}
+        onLock={vi.fn()}
+        onQuit={vi.fn()}
+      />,
+    );
+    await tick();
+
+    stdin.write('我没有想自杀，只是最近很累');
+    await tick();
+    stdin.write('\r');
+    await tick(300);
+    expect(lastFrame()).not.toContain('此刻的安全更重要');
+    expect(lastFrame()).toContain('你刚才明确否认');
+    expect(lastFrame()).toContain('本会谈已记录风险线索');
+
+    unmount();
+  });
 });

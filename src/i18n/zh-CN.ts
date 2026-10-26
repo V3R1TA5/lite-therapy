@@ -241,6 +241,8 @@ export const messages = {
     sidebarNotTriggered: '未触发',
     thirdPartyNotice:
       '你提到的是另一个人的风险。先确认对方此刻是否安全；如果可能，鼓励对方联系当地急救或危机热线，并让可信任的人陪着对方。',
+    negatedNotice:
+      '你刚才明确否认了自杀想法。我仍想确认你此刻是否安全；如果只是很累，我们可以慢一点继续。',
     riskBanner: '本会谈已记录风险线索。当前安全优先于其他话题。',
     sidebarModelMissing: '未配置',
     sessionMissing: '找不到这次会谈。',

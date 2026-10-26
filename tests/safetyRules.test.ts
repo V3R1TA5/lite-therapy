@@ -21,7 +21,9 @@ describe('safety rules', () => {
     expect(result.matches.some((match) => match.context === 'negated')).toBe(true);
 
     expect(scanRiskText('我没有自杀的想法').level).toBe('none');
+    expect(scanRiskText('我没有想自杀，只是最近很累').level).toBe('none');
     expect(scanRiskText('我不会伤害自己').level).toBe('none');
+    expect(scanRiskText('我不确定想不想自杀').level).toBe('concern');
   });
 
   it('does not suppress ambivalent statements', () => {

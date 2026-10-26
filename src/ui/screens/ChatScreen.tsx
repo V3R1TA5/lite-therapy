@@ -227,6 +227,16 @@ export function ChatScreen(props: ChatScreenProps) {
             setRiskBanner(true);
             return;
           }
+          const negatedOnly =
+            evaluation.level === 'concern' &&
+            contexts.includes('negated') &&
+            !contexts.includes('self') &&
+            !contexts.includes('third_party');
+          if (negatedOnly) {
+            setNotice(messages.chat.negatedNotice);
+            setRiskBanner(true);
+            return;
+          }
           setRiskCard(evaluation);
           setShowResources(false);
           setRiskBanner(true);

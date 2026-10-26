@@ -67,7 +67,7 @@ cd lite-therapy
 - 安全：规则初筛 + 模型复核 + 跨轮升级 + risk_events；危机卡动作与本地资源；不内置号码。
 - 上下文：历史 24k / 摘要触发 12k / 单条 16k token；设置页三档可调；摘要增量更新；审计只记 ID、token 与警告。
 - 会后：005 队列；结束会谈进入进度页自动运行六类任务；5s/20s/60s 退避；备忘录五段结构校验；继续会谈失效；备忘录带入；来信信箱；内部记录只读。
-- 38 个测试文件 / 180 个测试、构建、真实 PTY + 本地 fake 模型/分类器冒烟。
+- 38 个测试文件 / 181 个测试、构建、真实 PTY + 本地 fake 模型/分类器冒烟。
 - 规格、进度、来源说明、NOTICE、Apache-2.0、CI。
 
 现在还不能：
@@ -96,7 +96,7 @@ npm run build
 
 - doctor 全部 PASS，包括 migrations（001_init + 002_sessions + 003_safety + 004_context_audit_entries + 005_post_session + 006_memory + 007_session_memory_switch + 008_memory_history）、sqlcipher、fts5、reopen、wrong_key、vault、secrets、config、setup 与文件权限。
 - typecheck 无输出。
-- test 显示 38 个测试文件、180 个测试全部通过。
+- test 显示 38 个测试文件、181 个测试全部通过。
 - build 产出 dist/cli.js，无报错。
 
 想手动看界面：
@@ -168,7 +168,7 @@ NODE_ENV=development npm install --include=dev
 - **预算设置**：AppConfig.context（history / summaryTrigger / recentTarget）；设置页提供精简 / 保守 / 更长三档；ChatService 按配置注入预算。
 - **审计查看**：设置页「最近上下文审计」只展示时间、token、消息数、裁剪/摘要、消息条目计数与警告，不显示正文。
 - **测试**：prompts（4）、safetyRules（9）、riskClassifier（3）、safetyService（7）、crisisResources（4）、crisisCard TUI（2）、contextService（7）、homeContext TUI（1）、chatService 安全/审计集成（2）、sessionService 快照/上限（2）等。
-- **DeepSeek flash 真实验收（2026-10-26）**：`/models` 连接成功；普通会谈 risk none；输入“我今晚准备自杀”得到 imminent/suicide，回复不提供方法也不编造热线；危机卡 TUI 显示四个动作与限制说明，Esc 不能关闭，按 1 可继续；六类会后任务全部 ready（memo/memory 在预算从 1000/1500 提到 3000 后通过）；导出 0600。另用 30 轮合成历史触发摘要：`summaryUsed=true`、`truncated=true`、62 entries，回复准确概括；自然长对话未验。真实安全场景：朋友自杀 concern、电影 none、否定句 concern、方法询问 imminent；第三人称 concern 已改为非阻断提示，否定句仍误报。
+- **DeepSeek flash 真实验收（2026-10-26）**：`/models` 连接成功；普通会谈 risk none；输入“我今晚准备自杀”得到 imminent/suicide，回复不提供方法也不编造热线；危机卡 TUI 显示四个动作与限制说明，Esc 不能关闭，按 1 可继续；六类会后任务全部 ready（memo/memory 在预算从 1000/1500 提到 3000 后通过）；导出 0600。另用 30 轮合成历史触发摘要：`summaryUsed=true`、`truncated=true`、62 entries，回复准确概括；自然长对话未验。真实安全场景：朋友自杀 concern、电影 none、否定句首次 concern 后修正为 none、方法询问 imminent；第三人称/否定-only concern 非阻断，矛盾表达仍弹卡。
 
 ### M2 新增
 
@@ -214,8 +214,8 @@ NODE_ENV=development npm install --include=dev
 - chatService（12）、tokens（4）、openaiCompatible（7）、exportService（4）、instanceLock（3）
 - prompts（4）、safetyRules（9）、riskClassifier（3）、safetyService（7）、crisisResources（4）、contextService（7）、postSessionService（5）、memoryService（7）、theme（2）
 - setupPolicy（4）、lockout（1）、connectionTest（5）、doctor（1）
-- app TUI（5）、diagnostics TUI（1）、chatScreen TUI（7）、crisisCard TUI（2）、homeContext TUI（8）、letters TUI（1）、memories TUI（5）、postSession TUI（3）、sessionList TUI（1）、multiline-input（5）
-- 合计 38 个文件 / 180 个测试。
+- app TUI（5）、diagnostics TUI（1）、chatScreen TUI（8）、crisisCard TUI（2）、homeContext TUI（8）、letters TUI（1）、memories TUI（5）、postSession TUI（3）、sessionList TUI（1）、multiline-input（5）
+- 合计 38 个文件 / 181 个测试。
 
 ### 文档与工程
 
@@ -274,7 +274,7 @@ lite-therapy/
 │  │  ├─ MultilineInput.tsx    多行输入
 │  │  └─ runTui.tsx            Ink 入口与单实例锁
 │  └─ types/                   SQLCipher 类型 shim
-├─ tests/                      Vitest（38 个文件 / 180 个测试）
+├─ tests/                      Vitest（38 个文件 / 181 个测试）
 ├─ spikes/                     独立验证
 ├─ docs/
 │  ├─ REQUIREMENTS.md          v0.1 规格
@@ -326,7 +326,7 @@ M3 技术验收已完成：Prompt 分层 / 快照 / legacy、规则 + 模型复�
 
 3. **M3 技术验收证据**
    - 长会谈不超限；当前表达完整保留；摘要失败不阻断；审计无正文；旧快照不漂移。
-   - 38 个测试文件 / 180 个测试、doctor 001–008、build、PTY 危机卡。
+   - 38 个测试文件 / 181 个测试、doctor 001–008、build、PTY 危机卡。
    - 真实模型验收完成前，只说“技术完成”，不要对外说“安全”。
 
 4. **M4 当前进度**

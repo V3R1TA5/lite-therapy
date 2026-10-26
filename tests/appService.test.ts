@@ -126,6 +126,12 @@ describe('AppService', () => {
     });
     expect(embeddingUpdated.memory.embeddingModel).toBe('nomic-embed-text');
     expect(embeddingUpdated.memory.embeddingBaseUrl).toBe('http://127.0.0.1:11434/v1');
+    await expect(
+      service.updateMemorySettings({
+        ...embeddingUpdated.memory,
+        embeddingBaseUrl: 'not a url',
+      }),
+    ).rejects.toMatchObject({ code: 'INVALID_URL' });
     expect(config.profile.displayName).toBe('小林');
     expect(config.models.activeProfileId).toBe('openai-main');
     expect(service.readProfile()?.timezone).toBe('Asia/Tokyo');

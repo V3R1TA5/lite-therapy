@@ -341,12 +341,14 @@ describe('MemoryService', () => {
       },
     };
     let embeddingBaseUrl = '';
+    let embeddingApiKey: string | undefined;
     const embeddingProvider = {
       async *stream() {
         yield { type: 'done' as const };
       },
-      async embed(request: { input: string[]; profile: { baseUrl: string } }) {
+      async embed(request: { input: string[]; profile: { baseUrl: string }; apiKey?: string }) {
         embeddingBaseUrl = request.profile.baseUrl;
+        embeddingApiKey = request.apiKey;
         return request.input.map(() => [0.5, 0.5]);
       },
     };
@@ -363,6 +365,7 @@ describe('MemoryService', () => {
     });
     await expect(service.backfillEmbeddings()).resolves.toBe(1);
     expect(embeddingBaseUrl).toBe('http://127.0.0.1:11434/v1');
+    expect(embeddingApiKey).toBeUndefined();
     expect(getMemoryCard(harness.db, 'normal-card')?.embedding).toEqual([0.5, 0.5]);
     expect(getMemoryCard(harness.db, 'sensitive-card')?.embedding).toBeNull();
   });

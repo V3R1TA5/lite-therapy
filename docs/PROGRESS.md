@@ -20,11 +20,12 @@
 - **CI**：Node 22/24 上跑 typecheck、lint、test、build、doctor，并加入 eval:safety、许可证、密钥与 npm pack --dry-run。
 - **DeepSeek flash 真实验收**：`/models` 连接成功；普通会谈 risk none；imminent 风险触发并得到不提供方法/不编造热线的回复；六类会后任务全部 ready（memo/memory 提高 maxTokens 到 3000 后通过）；4 张记忆卡、1 封来信；Markdown 导出 0600。
 - **DeepSeek 预设**：模型设置可选 DeepSeek，自动填 `https://api.deepseek.com/v1` 与 `deepseek-flash`，仍需手动输入 Key。
+- **长上下文/摘要真实验收**：30 轮合成历史触发摘要；DeepSeek 回复概括准确；审计 `summaryUsed=true`、`truncated=true`、62 entries、9899 history tokens，无 summary_failed。
 - **真实危机卡 TUI**：真实 DeepSeek 触发“此刻的安全更重要”，四个动作与 AI 限制说明可见；Esc 不能关闭；按 1 后继续。
 
 ### 尚未完成（M7 剩余）
 
-- 长上下文/摘要真实模型验收；DeepSeek 短会谈已验，但不能据此说“安全”。
+- 自然（非合成）长对话验收；DeepSeek 短会谈与合成长上下文已验，但不能据此说“安全”。
 - **真实终端视觉验收**：80×24 验证浅色 truecolor、NO_COLOR 无颜色、锁屏/聊天 show-cursor/cursorTo；fake 模型下中文“你好”输入与回复正常；40×20 最小尺寸提示正确；IME 候选框仍无法自动化模拟。
 - 发布版本、npm pack 检查与 git 提交未做。
 

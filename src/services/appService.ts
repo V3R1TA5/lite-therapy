@@ -28,9 +28,11 @@ import {
   systemTimezone,
   type ThemeMode,
 } from '../config/appConfig.js';
+import { writeFileAtomic } from '../config/atomicFile.js';
 import type { AppPaths } from '../config/paths.js';
 import { getAppPaths } from '../config/paths.js';
 import { ModelRiskClassifier } from '../core/safety/classifier.js';
+import { AI_DISCLOSURE, APP_NAME, APP_VERSION, DISCLAIMER } from '../core/version.js';
 import { backupDatabase } from '../db/backup.js';
 import { type DatabaseConnection, openEncryptedDatabase } from '../db/database.js';
 import { runMigrations } from '../db/migrations/index.js';
@@ -457,6 +459,45 @@ export class AppService {
       throw new AppServiceError('INVALID_INPUT', '这个备份缺少恢复说明。');
     }
     return readFileSync(restorePath, 'utf8');
+  }
+
+  async exportAllData(passphrase: string): Promise<string> {
+    this.requireUnlocked();
+    await this.verifyPassphrase(passphrase);
+    if (this.db === null) {
+      throw new AppServiceError('NOT_UNLOCKED', '数据库尚未打开。');
+    }
+    const db = this.db;
+    const sessions = this.requireSessions().listSessions(1000);
+    const letters = listLetters(db, 1000);
+    const memories = listMemoryCards(db, { limit: 1000 }).map((card) => ({
+      ...card,
+      embedding: undefined,
+      revisions: listMemoryRevisions(db, card.id, 100),
+    }));
+    const data = {
+      app: APP_NAME,
+      version: APP_VERSION,
+      exportedAt: this.now().toISOString(),
+      disclaimer: DISCLAIMER,
+      aiDisclosure: AI_DISCLOSURE,
+      config: this.config,
+      latestCaseFormulation: getLatestCaseFormulation(db, 'zhiwei'),
+      sessions: sessions.map((session) => ({
+        session,
+        messages: this.requireSessions().listMessages(session.id),
+        jobs: listPostSessionJobsRow(db, session.id),
+        note: getLatestSessionNote(db, session.id),
+        supervision: getLatestSupervision(db, session.id),
+        memo: this.requireSessions().getMemoSnapshot(session.id),
+      })),
+      letters,
+      memories,
+    };
+    const stamp = this.now().toISOString().replace(/[:.]/g, '-');
+    const path = join(this.paths.data, 'exports', 'lite-therapy-all-' + stamp + '.json');
+    writeFileAtomic(path, JSON.stringify(data, null, 2), 0o600);
+    return path;
   }
 
   async restoreBackup(backupPath: string, passphrase: string): Promise<string> {

@@ -472,6 +472,11 @@ export const messages = {
     themeDark: '主题：深色',
     themeLight: '主题：浅色',
     themeUpdated: '主题已更新。',
+    exportAllData: '导出全部数据（JSON）',
+    exportAllTitle: '导出全部数据',
+    exportAllHint:
+      '包含档案、模型配置、会谈与消息、会后产物、来信、记忆与历史；不含 API Key。请输入启动密码。',
+    exportAllSuccess: '全部数据已导出：',
     backupData: '备份数据',
     backupList: '查看备份与恢复',
     wipeData: '彻底删除所有数据',

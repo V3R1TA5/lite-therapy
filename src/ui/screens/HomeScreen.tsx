@@ -57,6 +57,8 @@ type View =
   | 'memoryEmbedding'
   | 'backupPassword'
   | 'backupResult'
+  | 'exportAllPassword'
+  | 'exportAllResult'
   | 'backupList'
   | 'backupDetail'
   | 'commands'
@@ -89,6 +91,7 @@ type SettingsAction =
   | 'theme'
   | 'backup'
   | 'backupList'
+  | 'exportAll'
   | 'wipe'
   | 'help'
   | 'changePass'
@@ -146,6 +149,9 @@ export function HomeScreen(props: HomeScreenProps) {
   const [backupPassword, setBackupPassword] = useState('');
   const [backupPath, setBackupPath] = useState('');
   const [backupRunning, setBackupRunning] = useState(false);
+  const [exportAllPassword, setExportAllPassword] = useState('');
+  const [exportAllPath, setExportAllPath] = useState('');
+  const [exportAllRunning, setExportAllRunning] = useState(false);
   const [memoryEmbeddingInput, setMemoryEmbeddingInput] = useState('');
   const [backfilling, setBackfilling] = useState(false);
   const [backups, setBackups] = useState<ManualBackupSummary[]>([]);
@@ -291,6 +297,26 @@ export function HomeScreen(props: HomeScreenProps) {
       setView('settings');
     } catch (updateError) {
       setError(errorMessage(updateError));
+    }
+  };
+
+  const submitExportAll = async (submitted?: string) => {
+    const password = submitted ?? exportAllPassword;
+    if (password.length === 0) {
+      setError('请输入启动密码。');
+      return;
+    }
+    setExportAllRunning(true);
+    setError('');
+    try {
+      const path = await service.exportAllData(password);
+      setExportAllPath(path);
+      setExportAllPassword('');
+      setView('exportAllResult');
+    } catch (exportError) {
+      setError(errorMessage(exportError));
+    } finally {
+      setExportAllRunning(false);
     }
   };
 
@@ -792,6 +818,41 @@ export function HomeScreen(props: HomeScreenProps) {
     );
   }
 
+  if (view === 'exportAllPassword') {
+    return (
+      <ScreenFrame title={messages.settings.exportAllTitle} footer="Enter 导出 · Esc 返回">
+        <Text wrap="wrap">{messages.settings.exportAllHint}</Text>
+        <Box marginTop={1}>
+          <SingleLineInput
+            value={exportAllPassword}
+            onChange={setExportAllPassword}
+            onSubmit={(value) => {
+              void submitExportAll(value);
+            }}
+            onEscape={() => go('settings')}
+            placeholder={messages.settings.backupPlaceholder}
+            mask
+            disabled={exportAllRunning}
+          />
+        </Box>
+        {exportAllRunning ? <Text color={uiColor('warning')}>正在导出…</Text> : null}
+        {error.length > 0 ? <Text color={uiColor('danger')}>{error}</Text> : null}
+      </ScreenFrame>
+    );
+  }
+
+  if (view === 'exportAllResult') {
+    return (
+      <ScreenFrame title={messages.settings.exportAllData} footer="Enter 返回">
+        <Text color={uiColor('success')}>{messages.settings.exportAllSuccess}</Text>
+        <Box marginTop={1}>
+          <Text wrap="wrap">{exportAllPath}</Text>
+        </Box>
+        <BackMenu id="home-export-all-back" onBack={() => go('settings')} />
+      </ScreenFrame>
+    );
+  }
+
   if (view === 'backupPassword') {
     return (
       <ScreenFrame title={messages.settings.backupTitle} footer="Enter 备份 · Esc 返回">
@@ -1134,6 +1195,7 @@ export function HomeScreen(props: HomeScreenProps) {
       },
       { value: 'backup' as const, label: messages.settings.backupData },
       { value: 'backupList' as const, label: messages.settings.backupList },
+      { value: 'exportAll' as const, label: messages.settings.exportAllData },
       { value: 'wipe' as const, label: messages.settings.wipeData },
       { value: 'changePass' as const, label: messages.settings.changePassphrase },
       { value: 'modelEdit' as const, label: messages.settings.reconfigureModel },
@@ -1185,6 +1247,10 @@ export function HomeScreen(props: HomeScreenProps) {
             } else if (value === 'backupList') {
               setBackups(service.listManualBackups());
               go('backupList');
+            } else if (value === 'exportAll') {
+              setExportAllPassword('');
+              setExportAllPath('');
+              go('exportAllPassword');
             } else if (value === 'wipe') {
               setWipePassword('');
               setWipePhrase('');

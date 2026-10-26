@@ -52,6 +52,7 @@
 - **恢复**：输入备份密码 → 二次确认；先 VACUUM INTO 生成 pre-restore 安全备份，再原子替换 DB/vault/config；secrets.enc 重命名为 restored-away；完成后锁屏。
 - **彻底删除**：警示 → 密码 → 输入“彻底删除”短语；删除数据、配置、日志与手动备份目录；明确提示 SSD 残留。
 - **JSON 导出**：导出页可切换 Markdown/JSON；结构化 payload 包含会话、消息与勾选产物，0600；不含 API Key。
+- **全量 JSON 导出**：设置页“导出全部数据（JSON）”；含档案、模型配置、全部会谈与消息、会后最新产物、来信、记忆与历史；0600，不含 API Key。
 - **命令面板**：主页 Ctrl+K；新建/会谈/来信/记忆/设置/备份/锁定/退出；N/M/L/S 快捷键；测试覆盖打开与 Esc 返回。
 - **帮助与键位**：主页 `?` 或设置入口；含主页/会谈/危机卡键位与安全边界；测试覆盖打开与 Esc 返回。
 - **主题/NO_COLOR**：config.theme 支持 dark/light；统一 uiColor 色板；NO_COLOR 下关闭 FORCE_COLOR，连 dim 也不输出。

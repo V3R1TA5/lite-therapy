@@ -294,6 +294,17 @@ describe('AppService', () => {
     expect(statSync(exportPath).mode & 0o777).toBe(0o600);
     expect(readFileSync(exportPath, 'utf8')).toContain('今天有点累');
 
+    const allPath = await service.exportAllData(PASSPHRASE);
+    expect(statSync(allPath).mode & 0o777).toBe(0o600);
+    const allData = JSON.parse(readFileSync(allPath, 'utf8')) as {
+      sessions: Array<{ session: { id: string } }>;
+      memories: unknown[];
+    };
+    expect(allData.sessions[0]?.session.id).toBe(session.id);
+    expect(Array.isArray(allData.memories)).toBe(true);
+    expect(readFileSync(allPath, 'utf8')).not.toContain('sk-');
+    expect(readFileSync(allPath, 'utf8')).not.toContain('apiKey');
+
     service.lock();
     await service.unlock(PASSPHRASE);
     expect(service.getSession(session.id)?.status).toBe('ended');

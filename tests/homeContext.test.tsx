@@ -260,7 +260,7 @@ describe('Home context settings', () => {
 
     stdin.write('s');
     await tick();
-    await down(stdin, 7);
+    await down(stdin, 8);
     stdin.write('\r');
     await tick();
     expect(lastFrame()).toContain('这会删除数据库');

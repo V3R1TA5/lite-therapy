@@ -19,7 +19,7 @@
 - **发布检查脚本**：check:licenses 扫描 49 个运行时依赖，全部在许可证 allowlist；check:secrets 扫描仓库，无命中；release:check 串联 check、eval、license、secret、doctor、build。
 - **CI**：Node 22/24 上跑 typecheck、lint、test、build、doctor，并加入 eval:safety、许可证、密钥与 npm pack --dry-run。
 - **DeepSeek flash 真实验收**：`/models` 连接成功；普通会谈 risk none；imminent 风险触发并得到不提供方法/不编造热线的回复；六类会后任务全部 ready（memo/memory 提高 maxTokens 到 3000 后通过）；4 张记忆卡、1 封来信；Markdown 导出 0600。
-- **DeepSeek 预设**：模型设置可选 DeepSeek，自动填 `https://api.deepseek.com/v1` 与 `deepseek-flash`，仍需手动输入 Key。
+- **DeepSeek 预设**：模型设置可选 DeepSeek，自动填 `https://api.deepseek.com/v1` 与 `deepseek-flash`，仍需手动输入 Key；TUI 测试校验预设地址/模型与 Key 提交。
 - **长上下文/摘要真实验收**：30 轮合成历史触发摘要；DeepSeek 回复概括准确；审计 `summaryUsed=true`、`truncated=true`、62 entries、9899 history tokens。多样化 30 轮首次出现 `summary_failed`（17670 token），摘要 maxTokens 从 600 提到 3000 后复测 `summaryUsed=true`、9966 token、无失败；ChatScreen 在最新审计含 summary_failed 时显示非阻断提示。
 - **真实安全场景**：朋友自杀 concern、电影 none、方法询问 imminent；否定句首次 concern，修正否定识别后真实复测 none。第三人称/否定-only concern 使用非阻断提示。
 - **恢复/彻底删除副本演练**：真实数据目录副本上完成备份→标记会谈→恢复→标记消失→解锁→彻底删除，data/config/log 全部移除。
@@ -58,7 +58,7 @@
 - **主题/NO_COLOR**：config.theme 支持 dark/light；统一 uiColor 色板；NO_COLOR 下关闭 FORCE_COLOR，连 dim 也不输出。
 - **设置/备份 TUI 测试**：主题切换持久化、备份列表打开恢复说明、Esc 返回；彻底删除警示可取消；恢复密码入口可退出；修复备份列表双 SelectList 抢 Enter 与 wipeWarning 无 Esc 的问题。
 - **IME 光标**：MultilineInput / SingleLineInput 用 Ink useCursor + measureElement 定位；宽字符列测试。
-- **验证**：appService（9）覆盖备份文件/权限、备份浏览、错误密码拒绝、恢复后的数据回退与服务锁定、彻底删除目录与 NOT_SETUP、全量 JSON 0600/无密钥；homeContext（9）覆盖全量导出密码与结果页；exportService（4）覆盖 Markdown/JSON、勾选与 0600；当前 38 个测试文件 / 183 个测试。
+- **验证**：appService（9）覆盖备份文件/权限、备份浏览、错误密码拒绝、恢复后的数据回退与服务锁定、彻底删除目录与 NOT_SETUP、全量 JSON 0600/无密钥；homeContext（9）覆盖全量导出密码与结果页；exportService（4）覆盖 Markdown/JSON、勾选与 0600；当前 39 个测试文件 / 184 个测试。
 
 ### 尚未完成（M6 剩余）
 
@@ -91,7 +91,7 @@
 - **历史版本**：008 迁移新增 memory_card_revisions；编辑记忆时记录修改前后文本，详情页可查看历史。
 - **召回评分**：FTS 候选 + 本地卡片覆盖率、FTS 排名、置信度、新鲜度与重复引用惩罚；召回日志 reason 记录 fts5+coverage。
 - **召回可解释**：记忆详情展示最近 5 次召回会谈、评分与日期。
-- **验证**：38 个测试文件 / 183 个测试；memoryService（7）覆盖提取拒绝、去重、敏感过滤、召回日志、冲突标记、历史版本、覆盖率排序、embedding 召回与普通卡回填；memoriesScreen TUI（5）覆盖来源/编辑/归档/删除/筛选/标签/清空/按会谈删除；chatService（12）覆盖召回注入与开关；sessionService（13）覆盖单次会谈关闭记忆。
+- **验证**：39 个测试文件 / 184 个测试；memoryService（7）覆盖提取拒绝、去重、敏感过滤、召回日志、冲突标记、历史版本、覆盖率排序、embedding 召回与普通卡回填；memoriesScreen TUI（5）覆盖来源/编辑/归档/删除/筛选/标签/清空/按会谈删除；chatService（12）覆盖召回注入与开关；sessionService（13）覆盖单次会谈关闭记忆。
 
 ### 修改 / 新增文件
 
@@ -133,7 +133,7 @@
 - **内部记录只读页**：单次记录 / 纵向理解 / 督导 / 备忘录；警示“不是对你的结论”，PgUp/PgDn 滚动，不提供编辑。
 - **备忘录带入**：新建会谈询问是否带入最近 ready 备忘录，冻结到 memory_snapshot_json；ChatService 注入并审计 memoUsed。
 - **来信信箱**：主页未读入口、阅读页、已读标记；来信正文不进入内部记录。
-- **验证**：38 个测试文件 / 183 个测试；postSessionService（5）覆盖六任务成功、失效、备忘录失败不阻塞来信、running 重置、退避重试；postSessionScreen TUI（3）覆盖自动运行、失败重试与内部记录只读页；AppService 覆盖入队、后台共享 promise、重启解锁自动续跑与执行；断言 memo 请求包含督导意见。
+- **验证**：39 个测试文件 / 184 个测试；postSessionService（5）覆盖六任务成功、失效、备忘录失败不阻塞来信、running 重置、退避重试；postSessionScreen TUI（3）覆盖自动运行、失败重试与内部记录只读页；AppService 覆盖入队、后台共享 promise、重启解锁自动续跑与执行；断言 memo 请求包含督导意见。
 
 ### 修改 / 新增的主要文件
 
@@ -177,7 +177,7 @@
 - **脱敏审计**：每轮写入 context_audits（message_id、prompt/history token、消息数、truncated、summary/memo/memory 注入、warnings）与消息级 entries_json（角色、token、是否进入请求），不记录正文。
 - **预算设置**：AppConfig.context 暴露 history / summaryTrigger / recentTarget；设置页提供精简 / 保守 / 更长三档；ChatService 按配置注入预算。
 - **审计查看**：设置页「最近上下文审计」按会谈展示时间、token、消息数、裁剪/摘要、条目计数与警告，不显示正文。
-- **验证**：M3 完成时 32 个测试文件 / 135 个测试；当前总 38 个文件 / 183 个测试；真实 PTY + fake 模型/分类器验证危机卡出现、安全动作与会话继续；长历史/摘要失败/增量摘要/预算裁剪/审计/设置页由测试覆盖。
+- **验证**：M3 完成时 32 个测试文件 / 135 个测试；当前总 39 个文件 / 184 个测试；真实 PTY + fake 模型/分类器验证危机卡出现、安全动作与会话继续；长历史/摘要失败/增量摘要/预算裁剪/审计/设置页由测试覆盖。
 
 ### 修改 / 新增的主要文件
 

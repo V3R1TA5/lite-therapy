@@ -216,6 +216,17 @@ export function ChatScreen(props: ChatScreenProps) {
       },
       onRisk: (evaluation) => {
         if (evaluation.level !== 'none') {
+          const contexts =
+            evaluation.contexts ?? (evaluation.context !== undefined ? [evaluation.context] : []);
+          const thirdPartyOnly =
+            evaluation.level === 'concern' &&
+            contexts.includes('third_party') &&
+            !contexts.includes('self');
+          if (thirdPartyOnly) {
+            setNotice(messages.chat.thirdPartyNotice);
+            setRiskBanner(true);
+            return;
+          }
           setRiskCard(evaluation);
           setShowResources(false);
           setRiskBanner(true);

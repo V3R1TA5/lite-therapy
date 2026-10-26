@@ -26,6 +26,7 @@ export interface SafetyEvaluation {
   detector: SafetyDetector;
   category?: RiskCategory;
   context?: RiskContext;
+  contexts?: RiskContext[];
   ambiguous: boolean;
   classifierFailed: boolean;
   ruleCount: number;
@@ -156,6 +157,7 @@ export class SafetyService implements SafetyEvaluator {
       ambiguous: scan.ambiguous,
       classifierFailed,
       ruleCount: scan.matches.length,
+      contexts: [...new Set(scan.matches.map((match) => match.context))],
       ...(confidence !== undefined ? { confidence } : {}),
     };
   }

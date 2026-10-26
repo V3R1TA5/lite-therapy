@@ -270,4 +270,47 @@ describe('App chat entry', () => {
 
     unmount();
   });
+
+  it('uses a non-blocking notice for third-party concern without a self crisis card', async () => {
+    const safety: SafetyEvaluator = {
+      evaluate: async (): Promise<SafetyEvaluation> => ({
+        level: 'concern',
+        detector: 'model',
+        category: 'suicide',
+        context: 'third_party',
+        contexts: ['third_party'],
+        ambiguous: false,
+        classifierFailed: false,
+        ruleCount: 1,
+        confidence: 0.9,
+      }),
+    };
+    const { service } = await setup(
+      [[{ type: 'delta', text: '我先确认你朋友的安全。' }, { type: 'done' }]],
+      {
+        safety,
+      },
+    );
+    const session = service.createSession();
+    const { stdin, lastFrame, unmount } = render(
+      <ChatScreen
+        service={service}
+        sessionId={session.id}
+        onExit={vi.fn()}
+        onLock={vi.fn()}
+        onQuit={vi.fn()}
+      />,
+    );
+    await tick();
+
+    stdin.write('朋友说他想自杀');
+    await tick();
+    stdin.write('\r');
+    await tick(300);
+    expect(lastFrame()).not.toContain('此刻的安全更重要');
+    expect(lastFrame()).toContain('你提到的是另一个人的风险');
+    expect(lastFrame()).toContain('本会谈已记录风险线索');
+
+    unmount();
+  });
 });

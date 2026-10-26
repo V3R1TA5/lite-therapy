@@ -40,7 +40,7 @@
 - **预算设置与审计查看**：设置页可选择精简 / 保守 / 更长三档；最近上下文审计只显示消息 ID、角色、token、是否进入请求与警告，不显示正文。
 - **备份与恢复**：手动备份加密数据库、vault.json 与 config.toml；可浏览、输入备份密码并二次确认恢复；恢复前自动生成 pre-restore 安全备份。
 - **彻底删除**：警示 → 启动密码 → 输入“彻底删除”短语，删除数据库、vault、配置、日志与手动备份；明确提示 SSD 残留。
-- **验证**：38 个测试文件 / 179 个测试；CLI doctor；真实终端（PTY）+ 本地 fake 模型/分类器完成设置、会谈、危机卡与导出；另有 DeepSeek flash 短会谈真实验收，见 docs/EVALUATION.md。
+- **验证**：38 个测试文件 / 180 个测试；CLI doctor；真实终端（PTY）+ 本地 fake 模型/分类器完成设置、会谈、危机卡与导出；另有 DeepSeek flash 短会谈真实验收，见 docs/EVALUATION.md。
 
 ## 还不能做什么
 
@@ -50,7 +50,7 @@
 - **整理 worker 只在应用进程内**：结束会谈即自动后台运行，退出最多等待 2 秒；重启解锁后自动续跑 queued 任务。失败任务有 5s/20s/60s 自动退避。
 - **语义召回（可选）**：设置记忆向量模型后，新记忆会生成向量，设置页可手动“回填旧记忆向量”；未配置时仍是 FTS + 本地文本覆盖率。只为 normal 记忆发送向量请求。
 - IME 真实终端视觉验收未做；光标定位已接，但换行/极窄终端仍需实测。
-- 模型配置 UI 目前只有单档案；分任务模型映射仍未做。DeepSeek flash 已完成短会谈、危机卡 TUI、合成 30 轮摘要与安全场景验收；自然长对话未验收，第三人称/否定语境仍可能触发通用安全提示。
+- 模型配置 UI 目前只有单档案；分任务模型映射仍未做。DeepSeek flash 已完成短会谈、危机卡 TUI、合成 30 轮摘要与安全场景验收；自然长对话未验收，否定句仍可能误报 concern。
 - 仅 Linux 验证；macOS 的预编译与 CI 尚未补。
 
 ## 环境
@@ -104,7 +104,7 @@ npm run doctor
 | npm run build | 构建 dist/cli.js |
 | npm run typecheck | TypeScript 检查 |
 | npm run lint | Biome 检查 |
-| npm test | Vitest（38 个文件 / 179 个测试） |
+| npm test | Vitest（38 个文件 / 180 个测试） |
 | npm run check | typecheck + lint + test |
 | npm run eval:safety | 本地安全规则评估，不调用模型 |
 | npm run check:licenses | 检查运行时依赖许可证 |

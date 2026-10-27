@@ -69,6 +69,9 @@ describe('safety rules', () => {
     expect(scanRiskText('朋友说他想自杀，我也一样担心他').level).toBe('none');
     expect(scanRiskText('朋友说他想自杀，我也想过要报警').level).toBe('none');
     expect(scanRiskText('朋友说他想自杀，我也想过这个办法').level).toBe('none');
+    const historical = scanRiskText('我以前自杀过，朋友说他想自杀，我也有过');
+    expect(historical.level).toBe('concern');
+    expect(historical.matches.some((match) => match.context === 'self')).toBe(true);
   });
 
   it('recognizes a parent subject even after a comma', () => {

@@ -214,7 +214,6 @@ export function scanRiskText(text: string): RuleScanResult {
   const hasSelfMatch = matches.some((match) => match.context === 'self' && !match.suppressed);
   const thirdPartySource = [...matches].reverse().find((match) => match.context === 'third_party');
   if (
-    level === 'none' &&
     !hasSelfMatch &&
     thirdPartySource !== undefined &&
     SELF_CONTINUATION_PATTERN.test(thirdPartyTail)

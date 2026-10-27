@@ -99,7 +99,7 @@ const FICTION_PATTERN =
 const HISTORICAL_PATTERN = /(?:以前|曾经|过去|小时候|去年|那次|当时|used\s+to|in\s+the\s+past)/i;
 const HYPOTHETICAL_PATTERN = /(?:如果|假如|要是|万一|假设|\bif\b|\bwhat\s+if\b)/i;
 const SELF_CONTINUATION_PATTERN =
-  /(?:我|自己)(?:[^。！？!?；;\n]{0,8})?(?:也有过|也想过|也会想|也是一样|也一样|也是|同样|曾经也|最近也)(?=$|[，,。；;！？!?]|(?:要|想|会|准备|打算)?(?:这个|那个|这种|那种)?(?:念头|想法|感觉|经历|情况|自杀|死|伤害自己|不想活|结束|轻生))/;
+  /(?:我|自己)(?:[^。！？!?；;\n]{0,8})?(?:也有过|也有|也想过|也会想|也是一样|也一样|也是|同样|曾经也|最近也)(?=$|[，,。；;！？!?]|(?:要|想|会|准备|打算)?(?:这个|那个|这种|那种|同样的?|类似的?|一样的?)?(?:念头|想法|感觉|经历|情况|自杀|死|伤害自己|不想活|结束|轻生))/;
 const NEGATION_PATTERN =
   /(?:(?:没有|没|不会|不打算|从未|并不|从来没|(?<!想)不想|不)\s*$|(?:没有|没|从未|从来没).{0,6}(?:想过|考虑过)\s*$|(?:没有|没|从未|从来没).{0,6}(?:想|打算|准备|计划|考虑)\s*$|\b(?:not|never|don't|didn't)\s*$)/i;
 
@@ -177,7 +177,8 @@ function levelAfterContext(
 export function scanRiskText(text: string): RuleScanResult {
   const matches: RuleMatch[] = [];
   let level: RiskLevel = 'none';
-  let thirdPartyTail = '';
+  let hasSelfContinuation = false;
+  let continuationEvidence = '';
 
   for (const rule of RULES) {
     // 同一句里可能先提第三人、再讲自己；只看第一个命中会把后半句一起压掉。
@@ -198,8 +199,15 @@ export function scanRiskText(text: string): RuleScanResult {
         suppressed: adjusted.suppressed,
       };
       matches.push(result);
-      if (context === 'third_party') {
-        thirdPartyTail = text.slice(match.index + match[0].length);
+      if (
+        context === 'third_party' &&
+        SELF_CONTINUATION_PATTERN.test(text.slice(match.index + match[0].length))
+      ) {
+        hasSelfContinuation = true;
+        continuationEvidence = text
+          .slice(match.index + match[0].length)
+          .trim()
+          .slice(0, 120);
       }
       if (!adjusted.suppressed) {
         level = maxRiskLevel(level, adjusted.level);
@@ -213,17 +221,13 @@ export function scanRiskText(text: string): RuleScanResult {
 
   const hasSelfMatch = matches.some((match) => match.context === 'self' && !match.suppressed);
   const thirdPartySource = [...matches].reverse().find((match) => match.context === 'third_party');
-  if (
-    !hasSelfMatch &&
-    thirdPartySource !== undefined &&
-    SELF_CONTINUATION_PATTERN.test(thirdPartyTail)
-  ) {
+  if (!hasSelfMatch && thirdPartySource !== undefined && hasSelfContinuation) {
     // “朋友说他想自杀，我也有过”没有第二次出现风险词，但主语已经切回本人。
     matches.push({
       ruleId: thirdPartySource.ruleId + '.self_continuation',
       category: thirdPartySource.category,
       level: 'concern',
-      evidence: thirdPartyTail.trim().slice(0, 120),
+      evidence: continuationEvidence,
       context: 'self',
       suppressed: false,
     });

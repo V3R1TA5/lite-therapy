@@ -42,6 +42,8 @@ export const messages = {
       '可以设置启动密码；也可以跳过密码与恢复短语，生成本机自动解锁密钥。自动解锁仍加密，但拿到整个数据目录的人可以解密。',
     securityPassword: '设置启动密码和恢复短语（推荐）',
     securityPasswordHint: '忘记密码且丢失恢复短语，数据将无法恢复。',
+    securityNoRecovery: '设置启动密码，但跳过恢复短语（无法恢复）',
+    securityNoRecoveryHint: '仍然用启动密码加密；不展示、不确认恢复短语。忘记密码后没有恢复入口。',
     securityAuto: '跳过密码与恢复短语，使用本机自动解锁',
     securityAutoHint:
       '在配置目录写入 0600 自动解锁密钥；启动时自动解锁，改密或恢复后自动关闭。安全性低于启动密码。',

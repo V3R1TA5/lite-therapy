@@ -150,11 +150,36 @@ describe('App', () => {
     expect(lastFrame()).toContain('选择解锁方式');
     stdin.write('\x1b[B');
     await tick();
+    stdin.write('\x1b[B');
+    await tick();
     stdin.write('\r');
     await tick(400);
 
     expect(lastFrame()).toContain('怎么称呼你');
     expect(service.hasAutoUnlock()).toBe(true);
+
+    unmount();
+  });
+
+  it('sets up with password but skips the recovery phrase', async () => {
+    const service = makeService();
+    const { stdin, lastFrame, unmount } = render(<App service={service} />);
+    await tick();
+
+    stdin.write('\r');
+    await tick();
+    stdin.write('\x1b[B');
+    await tick();
+    stdin.write('\r');
+    await tick();
+    stdin.write('test passphrase 123\r');
+    await tick();
+    stdin.write('test passphrase 123\r');
+    await tick(400);
+
+    expect(lastFrame()).toContain('怎么称呼你');
+    expect(lastFrame()).not.toContain('恢复短语');
+    expect(service.hasAutoUnlock()).toBe(false);
 
     unmount();
   });

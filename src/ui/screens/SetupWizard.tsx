@@ -48,6 +48,17 @@ const AUTO_STEPS = [
   'model',
 ] as const satisfies readonly WizardStep[];
 
+const NO_RECOVERY_STEPS = [
+  'consent',
+  'security',
+  'passphrase',
+  'passphraseConfirm',
+  'profileName',
+  'profileAge',
+  'profileTimezone',
+  'model',
+] as const satisfies readonly WizardStep[];
+
 const RESUME_STEPS = [
   'profileName',
   'profileAge',
@@ -66,12 +77,14 @@ export interface SetupWizardProps {
 export function SetupWizard(props: SetupWizardProps) {
   const { service, resume, initialConfig, onComplete, onQuit } = props;
   const [stepIndex, setStepIndex] = useState(0);
-  const [securityMode, setSecurityMode] = useState<'password' | 'auto' | null>(null);
+  const [securityMode, setSecurityMode] = useState<'password' | 'noRecovery' | 'auto' | null>(null);
   const steps: readonly WizardStep[] = resume
     ? RESUME_STEPS
     : securityMode === 'auto'
       ? AUTO_STEPS
-      : FRESH_STEPS;
+      : securityMode === 'noRecovery'
+        ? NO_RECOVERY_STEPS
+        : FRESH_STEPS;
   const [passphrase, setPassphrase] = useState('');
   const [confirmation, setConfirmation] = useState('');
   const [recoveryPhrase, setRecoveryPhrase] = useState('');
@@ -136,6 +149,24 @@ export function SetupWizard(props: SetupWizardProps) {
     const issue = validatePassphraseConfirmation(passphrase, submittedConfirmation);
     if (issue !== null) {
       setError(issue);
+      return;
+    }
+    if (securityMode === 'noRecovery') {
+      setBusy(true);
+      setError('');
+      void service
+        .beginSetup(passphrase)
+        .then(() => {
+          setPassphrase('');
+          setConfirmation('');
+          setVaultCreated(true);
+          setBusy(false);
+          goNext();
+        })
+        .catch((setupError: unknown) => {
+          setBusy(false);
+          setError(errorMessage(setupError));
+        });
       return;
     }
     const phrase = createRecoveryPhrase();
@@ -281,6 +312,11 @@ export function SetupWizard(props: SetupWizardProps) {
         hint: messages.setup.securityPasswordHint,
       },
       {
+        value: 'noRecovery' as const,
+        label: messages.setup.securityNoRecovery,
+        hint: messages.setup.securityNoRecoveryHint,
+      },
+      {
         value: 'auto' as const,
         label: messages.setup.securityAuto,
         hint: messages.setup.securityAutoHint,
@@ -305,9 +341,14 @@ export function SetupWizard(props: SetupWizardProps) {
               if (value === 'password') {
                 setSecurityMode('password');
                 goNext();
-              } else {
-                chooseAutoUnlock();
+                return;
               }
+              if (value === 'noRecovery') {
+                setSecurityMode('noRecovery');
+                goNext();
+                return;
+              }
+              chooseAutoUnlock();
             }}
           />
         </Box>

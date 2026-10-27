@@ -13,6 +13,7 @@ export interface SelectListProps<T extends string> {
   options: ReadonlyArray<SelectOption<T>>;
   onSelect: (value: T) => void;
   onHighlight?: (value: T) => void;
+  onEscape?: () => void;
   isActive?: boolean;
   initialIndex?: number;
 }
@@ -41,7 +42,7 @@ function stepEnabled<T extends string>(
 }
 
 export function SelectList<T extends string>(props: SelectListProps<T>) {
-  const { options, onSelect, onHighlight, isActive = true, initialIndex } = props;
+  const { options, onSelect, onHighlight, onEscape, isActive = true, initialIndex } = props;
   const [index, setIndex] = useState(() => initialIndex ?? firstEnabled(options));
   const onHighlightRef = useRef(onHighlight);
   onHighlightRef.current = onHighlight;
@@ -70,6 +71,10 @@ export function SelectList<T extends string>(props: SelectListProps<T>) {
       }
       if (key.downArrow) {
         setIndex((current) => stepEnabled(options, current, 1));
+        return;
+      }
+      if (key.escape) {
+        onEscape?.();
         return;
       }
       if (key.return) {

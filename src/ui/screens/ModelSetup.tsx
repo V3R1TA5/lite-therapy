@@ -161,6 +161,7 @@ export function ModelSetup(props: ModelSetupProps) {
           <SelectList
             key="model-kind"
             options={kindOptions}
+            onEscape={onCancel}
             onSelect={(value) => {
               if (value === 'skip') {
                 onDone({ profile: null, tested: false });

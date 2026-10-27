@@ -73,15 +73,31 @@ export function SetupWizard(props: SetupWizardProps) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [phase, setPhase] = useState<'wizard' | 'finishing'>('wizard');
+  const [vaultCreated, setVaultCreated] = useState(false);
   const [pendingModel, setPendingModel] = useState<ModelSetupResult | null>(null);
   const [finishError, setFinishError] = useState('');
 
   const step: WizardStep = steps[stepIndex] ?? 'model';
   const stepLabel = messages.common.step(stepIndex + 1, steps.length);
+  // 保险库创建后不再允许退回密码/短语步骤：重填不会重新包裹密钥。
+  const canGoBack = !busy && stepIndex > 0 && !(vaultCreated && step === 'profileName');
+  const backHint = canGoBack ? ' · Esc 返回' : '';
 
   const goNext = () => {
     setError('');
     setStepIndex((current) => Math.min(current + 1, steps.length - 1));
+  };
+
+  const goBack = () => {
+    if (!canGoBack) {
+      return;
+    }
+    setError('');
+    if (step === 'recoveryCheck') {
+      setRecoveryIndex(0);
+      setAnswer('');
+    }
+    setStepIndex((current) => Math.max(0, current - 1));
   };
 
   const prepareRecovery = (submittedConfirmation: string = confirmation) => {
@@ -122,6 +138,7 @@ export function SetupWizard(props: SetupWizardProps) {
         .then(() => {
           setPassphrase('');
           setConfirmation('');
+          setVaultCreated(true);
           setBusy(false);
           goNext();
         })
@@ -227,7 +244,11 @@ export function SetupWizard(props: SetupWizardProps) {
 
   if (step === 'passphrase') {
     return (
-      <ScreenFrame title={messages.setup.passphraseTitle} subtitle={stepLabel} footer="Enter 继续">
+      <ScreenFrame
+        title={messages.setup.passphraseTitle}
+        subtitle={stepLabel}
+        footer={'Enter 继续' + backHint}
+      >
         <Text dimColor>{messages.setup.passphraseHint}</Text>
         <Box marginTop={1}>
           <SingleLineInput
@@ -243,6 +264,7 @@ export function SetupWizard(props: SetupWizardProps) {
               goNext();
             }}
             placeholder={messages.setup.passphrasePlaceholder}
+            onEscape={canGoBack ? goBack : undefined}
             disabled={busy}
             mask
           />
@@ -261,7 +283,7 @@ export function SetupWizard(props: SetupWizardProps) {
       <ScreenFrame
         title={messages.setup.passphraseConfirmTitle}
         subtitle={stepLabel}
-        footer="Enter 继续"
+        footer={'Enter 继续' + backHint}
       >
         <Text dimColor>两次输入需要一致。密码只用于本机解锁。</Text>
         <Box marginTop={1}>
@@ -270,6 +292,7 @@ export function SetupWizard(props: SetupWizardProps) {
             onChange={setConfirmation}
             onSubmit={(value) => prepareRecovery(value)}
             placeholder={messages.setup.passphraseConfirmPlaceholder}
+            onEscape={canGoBack ? goBack : undefined}
             mask
           />
         </Box>
@@ -287,7 +310,7 @@ export function SetupWizard(props: SetupWizardProps) {
       <ScreenFrame
         title={messages.setup.recoveryTitle}
         subtitle={stepLabel}
-        footer="↑↓ 选择 · Enter 确认 · 离开后无法再次查看"
+        footer={'↑↓ 选择 · Enter 确认' + backHint + ' · 离开后无法再次查看'}
       >
         <Text>{messages.setup.recoveryIntro}</Text>
         <Box
@@ -304,6 +327,7 @@ export function SetupWizard(props: SetupWizardProps) {
           <SelectList
             key="setup-recovery-show"
             options={[{ value: 'written', label: messages.setup.recoveryContinue }]}
+            onEscape={canGoBack ? goBack : undefined}
             onSelect={() => {
               setRecoveryIndex(0);
               setAnswer('');
@@ -322,7 +346,7 @@ export function SetupWizard(props: SetupWizardProps) {
       <ScreenFrame
         title={messages.setup.recoveryCheckTitle}
         subtitle={stepLabel}
-        footer={'第 ' + (recoveryIndex + 1) + ' / 3 个词 · Enter 确认'}
+        footer={'第 ' + (recoveryIndex + 1) + ' / 3 个词 · Enter 确认' + backHint}
       >
         <Text dimColor>{messages.setup.recoveryCheckHint}</Text>
         <Box marginTop={1}>
@@ -333,6 +357,7 @@ export function SetupWizard(props: SetupWizardProps) {
             value={answer}
             onChange={setAnswer}
             onSubmit={submitRecoveryWord}
+            onEscape={canGoBack ? goBack : undefined}
             placeholder="输入这个词"
             disabled={busy}
           />
@@ -353,7 +378,11 @@ export function SetupWizard(props: SetupWizardProps) {
 
   if (step === 'profileName') {
     return (
-      <ScreenFrame title={messages.setup.profileNameTitle} subtitle={stepLabel} footer="Enter 继续">
+      <ScreenFrame
+        title={messages.setup.profileNameTitle}
+        subtitle={stepLabel}
+        footer={'Enter 继续' + backHint}
+      >
         <Text dimColor>{messages.setup.profileNameHint}</Text>
         <Box marginTop={1}>
           <SingleLineInput
@@ -363,6 +392,7 @@ export function SetupWizard(props: SetupWizardProps) {
               setProfile((current) => ({ ...current, displayName: value.trim() }));
               goNext();
             }}
+            onEscape={canGoBack ? goBack : undefined}
             placeholder={messages.setup.profileNamePlaceholder}
           />
         </Box>
@@ -380,13 +410,14 @@ export function SetupWizard(props: SetupWizardProps) {
       <ScreenFrame
         title={messages.setup.profileAgeTitle}
         subtitle={stepLabel}
-        footer="↑↓ 选择 · Enter 确认"
+        footer={'↑↓ 选择 · Enter 确认' + backHint}
       >
         <Text dimColor>{messages.setup.profileAgeHint}</Text>
         <Box marginTop={1} flexDirection="column">
           <SelectList
             key="setup-age"
             options={ageOptions}
+            onEscape={canGoBack ? goBack : undefined}
             initialIndex={Math.max(
               0,
               ageOptions.findIndex((option) => option.value === profile.ageBand),
@@ -406,7 +437,7 @@ export function SetupWizard(props: SetupWizardProps) {
       <ScreenFrame
         title={messages.setup.profileTimezoneTitle}
         subtitle={stepLabel}
-        footer="Enter 继续"
+        footer={'Enter 继续' + backHint}
       >
         <Text dimColor>{messages.setup.profileTimezoneHint}</Text>
         <Box marginTop={1}>
@@ -424,6 +455,7 @@ export function SetupWizard(props: SetupWizardProps) {
               goNext();
             }}
             placeholder={messages.setup.profileTimezonePlaceholder}
+            onEscape={canGoBack ? goBack : undefined}
           />
         </Box>
         {profile.ageBand === 'minor' ? (
@@ -447,6 +479,7 @@ export function SetupWizard(props: SetupWizardProps) {
       initialApiKey={undefined}
       allowSkip
       subtitle={stepLabel}
+      onCancel={canGoBack ? goBack : undefined}
       onDone={finishWithModel}
     />
   );

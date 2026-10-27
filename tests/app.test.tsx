@@ -111,6 +111,30 @@ describe('App', () => {
     unmount();
   });
 
+  it('walks back through the security steps with Esc', async () => {
+    const service = makeService();
+    const { stdin, lastFrame, unmount } = render(<App service={service} />);
+    await tick();
+
+    stdin.write('\r');
+    await tick();
+    stdin.write('test passphrase 123\r');
+    await tick();
+    stdin.write('test passphrase 123\r');
+    await tick(300);
+    expect(lastFrame()).toContain('恢复短语');
+
+    stdin.write('\x1b');
+    await tick();
+    expect(lastFrame()).toContain('再输入一次');
+
+    stdin.write('\x1b');
+    await tick();
+    expect(lastFrame()).toContain('设置启动密码');
+
+    unmount();
+  });
+
   it('unlocks into the home screen with the stored passphrase', async () => {
     const service = makeService();
     await service.beginSetup('test passphrase 123');

@@ -43,7 +43,7 @@
 ### 修复
 
 - 记录第三人称命中之后的文本；若没有本人未抑制命中，且出现“我也有过 / 我也想过 / 我也是 / 我最近也……”等明确续接，补一个 `self` concern。
-- 对“我也有过很多疑问”“我也想过怎么帮他”“我也一样担心他”这类后续词做排除，避免把关心误判成本人风险。
+- 对“我也有过很多疑问”“我也想过怎么帮他”“我也一样担心他”“我也想过要报警/这个办法”这类后续词做排除，避免把关心或求助行动误判成本人风险。
 - ChatScreen 看到 contexts 同时含 third_party 与 self 时仍弹本人危机卡。
 
 ### 验证
@@ -51,6 +51,7 @@
 - safetyRules 新增 1 个测试（多组断言），覆盖“我也有过”“我也想过”为 concern，以及“很多疑问 / 怎么帮他 / 一样担心”为 none；当前 safetyRules 14 个。
 - 39 个测试文件 / 193 个测试通过；typecheck、lint 通过。
 - 真实 DeepSeek 输入“朋友说他想自杀，我也有过”：risk concern、contexts=[third_party,self]、detector=rule+model；回复同时确认朋友安全，并追问用户是过去还是现在。
+- 真实 DeepSeek 输入“朋友说他想自杀，我也想过要报警”：risk concern、contexts=[third_party]（model 复核），没有 self；TUI 会走第三人称非阻断提示。
 
 ### 限制
 

@@ -257,11 +257,11 @@ describe('App', () => {
     service.lock();
 
     const { stdin, lastFrame, unmount } = render(<App service={service} />);
-    await tick();
+    await tick(300);
     expect(lastFrame()).toContain('已锁定');
 
     stdin.write('test passphrase 123\r');
-    await tick(500);
+    await tick(600);
 
     const frame = lastFrame() ?? '';
     expect(frame).toContain('主页');

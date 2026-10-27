@@ -321,6 +321,29 @@ describe('Home context settings', () => {
     unmount();
   });
 
+  it('warns after changing the embedding model', async () => {
+    const { service } = await setup();
+    const { stdin, lastFrame, unmount } = render(<Harness service={service} />);
+    await tick();
+
+    stdin.write('s');
+    await tick();
+    await down(stdin, 3);
+    stdin.write('\r');
+    await tick();
+    await down(stdin, 2);
+    stdin.write('\r');
+    await tick();
+    expect(lastFrame()).toContain(messages.settings.memoryEmbedding);
+
+    stdin.write('test-embedding-model\r');
+    await tick(300);
+    expect(service.getConfig()?.memory.embeddingModel).toBe('test-embedding-model');
+    expect(lastFrame()).toContain('模型或端点变化会清空旧向量');
+
+    unmount();
+  });
+
   it('saves an independent embedding endpoint from memory settings', async () => {
     const { service } = await setup();
     const { stdin, lastFrame, unmount } = render(<Harness service={service} />);

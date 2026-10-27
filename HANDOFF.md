@@ -70,14 +70,13 @@ cd lite-therapy
 - 39 个测试文件 / 193 个测试、构建、真实 PTY + 本地 fake 模型/分类器冒烟。
 - 规格、进度、来源说明、NOTICE、Apache-2.0、CI。
 
-现在还不能：
+### 边界与仍未做
 
-- 真实 embedding 只验单模型小样本（应用内 1 查询/2 卡，另有 8 卡/6 查询抽查）；默认 12k 自然摘要虽已触发，仍可能漏细节。DeepSeek flash 短会谈、危机卡 UI、28 轮自然多轮会谈、合成 30 轮摘要已验，但不能据此说“安全”或“语义质量已解决”。
-- **M4 完成 6/6 个会后任务**：记忆提取由 M5 接入；结束即后台 worker、退出最多等 2 秒、解锁自动续跑、整理进度页、单任务重试、5s/20s/60s 退避、启动 running→queued、备忘录带入、来信信箱与内部记录只读页已接。
-- 记忆：记忆卡提取/召回/记忆库/开关/导出勾选/冲突确认/历史版本/覆盖率评分/可选 embedding 召回/手动回填已接；已用独立 Ollama 端点 qwen3-embedding:0.6b 验 1024 维回填与无语义重叠召回；敏感卡不发送向量请求。
-- IME 真实终端视觉验收；备份、恢复、彻底删除、JSON 导出、主页命令面板、主题/NO_COLOR、真实光标已接。
-- 多模型档案 UI 与分任务模型覆盖。
-- macOS / Windows 验证。
+- **真实 embedding**：应用内只验单模型 1 查询/2 卡，另有 8 卡/6 查询抽查（top1 5/6）；更换模型/端点会清空旧向量，需手动回填，不代表整体语义质量。
+- **UI/IME**：真实中文 IME 候选框、换行/窄终端视觉复核未做；设置页会在清空向量后提示回填。
+- **多模型档案 UI / 分任务模型覆盖** 未做；主会谈、安全复核、摘要、embedding 的配置仍以单 active profile 为中心。
+- **平台**：仅 Linux 验证；macOS / Windows 未验证。
+- **安全**：规则 + 模型复核 + 危机卡已接，但检测是概率性的；真实短会谈、长摘要与混合句验收不能推出“安全”。
 
 这些属于 M3–M7。完整范围见 **docs/REQUIREMENTS.md** 第 4 节与第 16 节。
 
@@ -312,57 +311,14 @@ lite-therapy/
 
 ---
 
-## 8. M3 验收与 M4
+## 8. 验收现状（2026-10-27）
 
-M3 技术验收已完成：Prompt 分层 / 快照 / legacy、规则 + 模型复核、跨轮升级、risk_events、危机卡、本地资源、上下文预算、滚动摘要、预算设置、脱敏审计、fake 分类器 PTY 验收。
-
-剩余 / 待办：
-
-1. **真实模型验收（需要用户提供 provider）**
-   - 短会谈、长会谈摘要、摘要失败降级、危机卡、分类失败、旧会谈继续。
-   - 不把 Key 写进仓库；验收数据用临时 `LITE_THERAPY_HOME` 并在结束后删除。
-   - 用户未提供前，继续使用 fake provider；不要假装做过真实模型验收。
-
-2. **安全 UI 打磨（可选）**
-   - 锁定 / 自动锁定仍可暂时离开危机卡；解锁后只保留风险标记。
-   - 可根据 session.risk_state 在只读/继续会谈时显示“上次触发过安全提示”，但不自动重开。
-
-3. **M3 技术验收证据**
-   - 长会谈不超限；当前表达完整保留；摘要失败不阻断；审计无正文；旧快照不漂移。
-   - 39 个测试文件 / 193 个测试、doctor 001–008、build、PTY 危机卡。
-   - 真实模型验收完成前，只说“技术完成”，不要对外说“安全”。
-
-4. **M4 当前进度**
-   - 005 迁移：session_notes / case_formulations / supervisions / memos / letters / post_session_jobs。
-   - PostSessionService 串行执行 session_note → case_formulation → supervision → memo → letter；备忘录五段结构校验；发布前检查 ended_at 与 source_ended_at；继续会谈标 stale 并归档 ready 备忘录。
-   - 结束会谈自动进入进度页并运行；失败单任务重试；启动 running→queued；内部记录只读页；备忘录带入；来信信箱。
-   - 已测：五任务、失效、备忘录失败不阻塞来信、进度页自动/重试、启动恢复、备忘录注入、来信已读。
-
-5. **M5 当前进度与下一步**
-   - 006 迁移：memory_cards / memory_recalls / memory_cards_fts。
-   - 记忆提取（最多 8 条，拒绝诊断/方法/无来源，哈希去重）与基础 FTS5 召回；ChatService 注入并审计 memoryUsed。
-   - 记忆库：筛选、来源、编辑、归档、删除、按会谈删除、清空；全局/单次开关；导出勾选；冲突标记与确认。
-   - 下一步：语义 embedding；当前评分已补本地覆盖率。
-   - M4 技术路径完成：结束即后台 worker、解锁自动续跑、退出等待与 5s/20s/60s 退避已实现；剩余真实模型验收。
-
-6. **M6 当前进度**
-   - 手动备份：设置页输入密码后生成 manual-backups/backup-* 目录，包含加密数据库快照、vault.json、config.toml 与 RESTORE.txt；不含 API Key。设置页可浏览备份、查看恢复说明，路径做根目录校验。
-   - 恢复：输入备份密码并二次确认；先自动生成 pre-restore 安全备份，再替换 DB/vault/config，重命名 secrets.enc 为 restored-away，最后锁屏。
-   - 彻底删除：警示 → 密码 → 输入“彻底删除”短语；删除数据库、vault、配置、日志与手动备份；不承诺 SSD 物理擦除。
-   - JSON 导出：设置导出页可切换 Markdown/JSON；结构化 payload 默认不含 API Key，产物按勾选写入，0600。
-   - 命令面板：主页 Ctrl+K；N/M/L/S 快捷键；备份入口。
-   - 主题：dark/light 配置，统一 uiColor 色板；NO_COLOR 返回无颜色。
-   - IME 光标：MultilineInput / SingleLineInput 用 Ink useCursor + measureElement 定位；宽字符用 string-width。
-   - 未完成：真实终端视觉验收，尤其换行与窄终端。
-
-7. **M7 当前进度**
-   - 已加 docs/EVALUATION.md：真实模型验收步骤、安全复核清单、发布检查。
-   - 已加 npm run eval:safety：9 个本地规则场景，当前 9/9 通过；不调用模型。
-   - 已加 check:licenses（49 个运行时依赖全部通过）、check:secrets（无命中）与 release:check；CI 已接入 eval/许可证/密钥/pack 检查。
-   - 已做 npm pack --dry-run：7 个文件，无数据/密钥。
-   - 已做：DeepSeek flash 真实连接、普通会谈、imminent 风险回应、六类会后任务、记忆/来信、导出 0600。
-   - 已做：恢复/彻底删除在验收副本上真实演练（备份、恢复、pre-restore、标记会谈回退、目录删除）。
-   - 待做：IME 候选框真实验收；默认 12k 自然摘要与真实 embedding 已完成（后者仅单模型单查询）。本地 git 提交已完成，仍未推送。
+- **M3**：Prompt 分层/快照/legacy、规则 + 模型复核、跨轮升级、risk_events、危机卡、本地资源、上下文预算、滚动摘要、预算设置、脱敏审计、fake 分类器 PTY 验收完成。DeepSeek 短会谈、28 轮自然多轮、默认 12k/6k 摘要、危机卡与真实安全场景已验。
+- **M4**：会后队列 6/6（session_note → case_formulation → supervision → memo → letter → memory）；结束即后台运行、单任务重试、5s/20s/60s 退避、重启续跑、备忘录带入、来信信箱、内部记录只读。
+- **M5**：记忆提取/召回/记忆库/开关/历史版本/召回评分完成；qwen3-embedding:0.6b 完成 1024 维真实回填与单组召回，另有 8 卡/6 查询抽查（top1 5/6）；模型/端点变化清空旧向量并提示回填。
+- **M6**：备份/恢复/彻底删除、JSON 导出、命令面板、主题/NO_COLOR、真实光标完成；IME 候选框与换行/窄终端视觉验收未做。
+- **M7**：`docs/EVALUATION.md`、`eval:safety` 9/9、`eval:embedding`、许可证/密钥/发布检查、`release:check` 已做。
+- **仍待做**：真实中文 IME 候选框、UI 视觉复核、macOS/Windows、最终发布与推送。安全检测仍是概率性的，不能对外说“安全”。
 
 ---
 

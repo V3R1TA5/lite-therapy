@@ -129,8 +129,16 @@ export function MultilineInput(props: MultilineInputProps) {
           insert('\n');
           return;
         }
-        if (value.trim().length > 0) {
-          onSubmit(value);
+        // Windows/自动化可能把文本和回车放在同一个 input 块里，同时置 key.return=true。
+        const newlineIndex = input.search(/[\r\n]/);
+        const typed = newlineIndex >= 0 ? input.slice(0, newlineIndex) : input;
+        const next = value.slice(0, cursor) + typed + value.slice(cursor);
+        if (typed.length > 0) {
+          onChange(next);
+          setCursor(cursor + typed.length);
+        }
+        if (next.trim().length > 0) {
+          onSubmit(next);
         }
         return;
       }

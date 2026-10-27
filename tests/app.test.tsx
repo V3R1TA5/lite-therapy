@@ -277,7 +277,8 @@ describe('App', () => {
     service.lock();
 
     const { stdin, lastFrame, unmount } = render(<App service={service} />);
-    await tick();
+    await tick(300);
+    expect(lastFrame()).toContain('已锁定');
     stdin.write('\t');
     await tick(300);
 

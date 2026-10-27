@@ -144,6 +144,7 @@ npm pack --dry-run
   - 查询“职业发展让我很焦虑”与两张卡都没有 FTS 三字片段重叠；召回仍把“来访者说最近工作压力很大，晚上睡不好。”排第一，家庭卡第二；reason=`fts5+coverage+embedding`，分数约 0.504 / 0.463。
   - 端到端 AppService + 真实 embedding + fake 聊天 provider：系统提示注入工作卡，不注入家庭卡；审计 memoryUsed=true，无 warning。
   - 首轮真实调用暴露 `const embed = provider.embed; embed(...)` 丢失 this，已修复并加回归测试；这也是必须跑真实 provider 的原因。
+  - 模型切换：真实数据副本上验证 1024 维卡在清空设置后变为 null，恢复 qwen 后重新回填为 1024 维；appService 测试覆盖只切开关不清空。
   - 限制：只有 1 个模型、1 个查询、2 张卡；更换模型/端点会清空旧向量、需要手动回填，但不会自动重建；不能据此评价整体中文语义质量。
 - **未覆盖**：真实中文 IME 候选框、系统性的 embedding 质量/多模型对比。
 - **产品预设**：模型设置新增 DeepSeek 预设，自动填 base URL 与 `deepseek-flash`，仍需手动输入 Key。

@@ -15,8 +15,6 @@ jobs:
         # macOS 待真实验收后再加入矩阵。
         os: [ubuntu-latest, windows-latest]
         node: [22, 24]
-    env:
-      LITE_THERAPY_HOME: ${{ runner.temp }}/lite-therapy-ci
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

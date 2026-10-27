@@ -1,6 +1,6 @@
 # Lite Therapy — 交接档
 
-> 状态：M3 技术完成；DeepSeek flash 短会谈、危机卡 TUI、28 轮自然多轮会谈与精简预算摘要已验，默认 12k 自然摘要待验；M4 会后队列 6/6；M5 可选 embedding 已用 qwen3-embedding:0.6b 做真实回填/召回验收；M6 技术完成；M7 评估进行中
+> 状态：M3 技术完成；DeepSeek flash 短会谈、危机卡 TUI、28 轮自然多轮会谈、默认 12k 自然摘要与精简预算摘要已验；M4 会后队列 6/6；M5 可选 embedding 已用 qwen3-embedding:0.6b 做真实回填/召回验收；M6 技术完成；M7 评估进行中
 > 更新：2026-10-27
 > 仓库标识：lite-therapy
 > 产品名：Lite Therapy
@@ -52,7 +52,7 @@ cd lite-therapy
 
 ## 2. 当前状态
 
-**M3 技术完成：Prompt 分层、快照、规则 + 模型复核、危机卡、上下文预算、滚动摘要、预算设置与审计查看已落地；DeepSeek 短会谈、28 轮自然多轮会谈与 6k 精简预算摘要已验，默认 12k 自然摘要还没触发。M4 会后队列与单次记录 / 纵向理解 / 督导 / 备忘录 / 来信落地；M5 记忆提取、基础召回与可选 embedding 已接，并用 qwen3-embedding:0.6b 做了单组真实回填/召回。**
+**M3 技术完成：Prompt 分层、快照、规则 + 模型复核、危机卡、上下文预算、滚动摘要、预算设置与审计查看已落地；DeepSeek 短会谈、28 轮自然多轮会谈、默认 12k 自然摘要与 6k 精简预算摘要已验。M4 会后队列与单次记录 / 纵向理解 / 督导 / 备忘录 / 来信落地；M5 记忆提取、基础召回与可选 embedding 已接，并用 qwen3-embedding:0.6b 做了单组真实回填/召回。**
 
 现在能跑：
 
@@ -72,7 +72,7 @@ cd lite-therapy
 
 现在还不能：
 
-- 默认 12k 预算下的自然长对话摘要验收；DeepSeek flash 短会谈、危机卡 UI、28 轮自然多轮会谈（6k 精简摘要）与合成 30 轮摘要已验；真实 embedding 已验单模型单查询，但不能据此说“安全”或“语义质量已解决”。
+- 真实 embedding 只验单模型单查询；默认 12k 自然摘要虽已触发，仍可能漏细节。DeepSeek flash 短会谈、危机卡 UI、28 轮自然多轮会谈、合成 30 轮摘要已验，但不能据此说“安全”或“语义质量已解决”。
 - **M4 完成 6/6 个会后任务**：记忆提取由 M5 接入；结束即后台 worker、退出最多等 2 秒、解锁自动续跑、整理进度页、单任务重试、5s/20s/60s 退避、启动 running→queued、备忘录带入、来信信箱与内部记录只读页已接。
 - 记忆：记忆卡提取/召回/记忆库/开关/导出勾选/冲突确认/历史版本/覆盖率评分/可选 embedding 召回/手动回填已接；已用独立 Ollama 端点 qwen3-embedding:0.6b 验 1024 维回填与无语义重叠召回；敏感卡不发送向量请求。
 - IME 真实终端视觉验收；备份、恢复、彻底删除、JSON 导出、主页命令面板、主题/NO_COLOR、真实光标已接。
@@ -169,7 +169,7 @@ NODE_ENV=development npm install --include=dev
 - **预算设置**：AppConfig.context（history / summaryTrigger / recentTarget）；设置页提供精简 / 保守 / 更长三档；ChatService 按配置注入预算。
 - **审计查看**：设置页「最近上下文审计」只展示时间、token、消息数、裁剪/摘要、消息条目计数与警告，不显示正文。
 - **测试**：prompts（4）、safetyRules（13）、riskClassifier（3）、safetyService（7）、crisisResources（4）、crisisCard TUI（2）、contextService（7）、homeContext TUI（1）、chatService 安全/审计集成（2）、sessionService 快照/上限（2）等。
-- **DeepSeek flash 真实验收（2026-10-26）**：`/models` 连接成功；普通会谈 risk none；28 轮多轮会谈均 done/risk none；模型多次主动安全确认但未弹卡；默认预算未触发摘要，切到“精简”预设后摘要通过；输入“我今晚准备自杀”得到 imminent/suicide，回复不提供方法也不编造热线；危机卡 TUI 显示四个动作与限制说明，Esc 不能关闭，按 1 可继续；朋友风险显示非阻断“他人风险”提示，不弹本人卡；六类会后任务全部 ready（memo/memory 在预算从 1000/1500 提到 3000 后通过）；导出 0600。另用 30 轮合成历史触发摘要：`summaryUsed=true`、`truncated=true`、62 entries，回复准确概括；多样化 30 轮首次 `summary_failed`（17670 token），摘要 maxTokens 从 600 提到 3000 后复测 9966 token、无失败；28 轮自然会谈约 7455 token，默认 12k 未触发，切到 6k 精简预算后 `summaryUsed=true`、5919 token、无失败。真实安全场景：朋友自杀 concern、电影 none、否定句首次 concern 后修正为 none、方法询问 imminent；第三人称/否定-only concern 非阻断，矛盾表达仍弹卡。混合句“朋友说他想自杀，其实我也想过自杀”真实返回 concern、contexts=[third_party,self]；首次 detector=rule-fallback，分类器 maxTokens 从 300 提到 1000、默认超时 12s 后复测 rule+model。规则改为扫描全部命中并按分句收窄语境后，ChatScreen 对该组合仍弹本人危机卡。
+- **DeepSeek flash 真实验收（2026-10-26）**：`/models` 连接成功；普通会谈 risk none；28 轮多轮会谈均 done/risk none；模型多次主动安全确认但未弹卡；当时默认预算未触发摘要，切到“精简”预设后摘要通过；输入“我今晚准备自杀”得到 imminent/suicide，回复不提供方法也不编造热线；危机卡 TUI 显示四个动作与限制说明，Esc 不能关闭，按 1 可继续；朋友风险显示非阻断“他人风险”提示，不弹本人卡；六类会后任务全部 ready（memo/memory 在预算从 1000/1500 提到 3000 后通过）；导出 0600。另用 30 轮合成历史触发摘要：`summaryUsed=true`、`truncated=true`、62 entries，回复准确概括；多样化 30 轮首次 `summary_failed`（17670 token），摘要 maxTokens 从 600 提到 3000 后复测 9966 token、无失败；28 轮自然会谈约 7455 token，默认 12k 未触发；切到 6k 精简预算后 `summaryUsed=true`、5919 token、无失败。随后在同一会谈继续 13 段长文本，默认 12k 触发：`summaryUsed=true`、history 9820 token、prompt 11800、truncated、warning `history_truncated`、无 `summary_failed`；摘要 735 字，覆盖此前工作/睡眠/家庭/边界/身体等主题。真实安全场景：朋友自杀 concern、电影 none、否定句首次 concern 后修正为 none、方法询问 imminent；第三人称/否定-only concern 非阻断，矛盾表达仍弹卡。混合句“朋友说他想自杀，其实我也想过自杀”真实返回 concern、contexts=[third_party,self]；首次 detector=rule-fallback，分类器 maxTokens 从 300 提到 1000、默认超时 12s 后复测 rule+model。规则改为扫描全部命中并按分句收窄语境后，ChatScreen 对该组合仍弹本人危机卡。
 
 - **真实 embedding（2026-10-27）**：本机 Ollama `qwen3-embedding:0.6b`（639MB，1024 维），独立端点 `http://127.0.0.1:11434/v1`；回填 2 张 normal 卡（含临时家庭卡），3 张 restricted 保持 null；查询“职业发展让我很焦虑”无 FTS 候选，工作压力卡仍排第一、家庭卡第二，reason=`fts5+coverage+embedding`；端到端 AppService + ChatService 验证 `memoryUsed=true` 且只注入工作卡。首次真实调用暴露 provider.embed 丢 this，已修复并加回归测试。限制：单模型单查询，不代表整体语义质量；换模型后旧向量未自动失效。
 
@@ -362,7 +362,7 @@ M3 技术验收已完成：Prompt 分层 / 快照 / legacy、规则 + 模型复�
    - 已做 npm pack --dry-run：7 个文件，无数据/密钥。
    - 已做：DeepSeek flash 真实连接、普通会谈、imminent 风险回应、六类会后任务、记忆/来信、导出 0600。
    - 已做：恢复/彻底删除在验收副本上真实演练（备份、恢复、pre-restore、标记会谈回退、目录删除）。
-   - 待做：默认 12k 自然摘要、IME 候选框真实验收；真实 embedding 已完成单模型单查询验收。本地 git 提交已完成，仍未推送。
+   - 待做：IME 候选框真实验收；默认 12k 自然摘要与真实 embedding 已完成（后者仅单模型单查询）。本地 git 提交已完成，仍未推送。
 
 ---
 

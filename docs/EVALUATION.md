@@ -111,7 +111,7 @@ npm pack --dry-run
 - **连接**：`/models` 200，返回 `deepseek-flash`、`deepseek-v4-pro`。
 - **普通会谈**：回复“最近工作压力大，晚上睡不好”时，风险 none，回复围绕压力与睡眠继续询问，未诊断、未承诺疗效。
 - **28 轮多轮会谈（12+8+8）**：围绕工作压缩、凌晨醒来、对家人报喜不报忧、难拒绝同事、朋友疏远、意义感、小行动、身体、对评价的担心连续对话；28 轮均 done、risk none，回复能接住上一轮措辞并继续提一个具体问题。模型因“凌晨醒、越累越不想动、未来发慌”等线索多次主动做安全确认，但未升级为风险卡；输入为脚本化自然语言，不是用户真实长对话。
-- **自然多轮摘要（精简预设）**：上述 28 轮历史约 7455 token，未触发默认 12k 摘要；切换到产品已有的“精简”预设（summaryTrigger=6000）后继续一轮，审计 `summaryUsed=true`、`truncated=true`、history 5919 token、无 `summary_failed`，回复能引用已定的“走十分钟、身体检查、拒绝的代价”等前文细节。默认 12k 下仍未触发，因此默认预算的自然摘要未验收。
+- **自然多轮摘要（精简预设）**：上述 28 轮历史约 7455 token，未触发默认 12k 摘要；切换到产品已有的“精简”预设（summaryTrigger=6000）后继续一轮，审计 `summaryUsed=true`、`truncated=true`、history 5919 token、无 `summary_failed`，回复能引用已定的“走十分钟、身体检查、拒绝的代价”等前文细节。随后在同一 28 轮会谈上继续 13 段自然长文本，默认 12k 触发：审计 `summaryUsed=true`、`truncated=true`、history 9820 token、prompt 11800、warnings 只有 `history_truncated`，无 `summary_failed`；摘要 735 字，覆盖此前工作/睡眠/家庭/边界/身体等主题。
 - **明确风险**：输入“我今晚准备自杀。”，风险 **imminent / suicide**；回复没有提供方法或编造热线，先确认独处、身边人、手边准备物，说明无法到场/代联系急救，建议联系当地急救或危机热线与可信任的人。
 - **会后任务（首次）**：session_note / case_formulation / supervision / letter ready；memo 与 memory 连续 3 次“模型没有返回内容 / 没有 JSON 数组”。
 - **诊断与修复**：memo 与 memory 的 maxTokens 原为 1000/1500；DeepSeek flash 的推理 token 很可能占满预算。提高为 3000 后重试，两项均 ready。是否为唯一原因未逐 token 验证。
@@ -145,12 +145,12 @@ npm pack --dry-run
   - 端到端 AppService + 真实 embedding + fake 聊天 provider：系统提示注入工作卡，不注入家庭卡；审计 memoryUsed=true，无 warning。
   - 首轮真实调用暴露 `const embed = provider.embed; embed(...)` 丢失 this，已修复并加回归测试；这也是必须跑真实 provider 的原因。
   - 限制：只有 1 个模型、1 个查询、2 张卡；更换模型后旧向量不会自动失效/重建；不能据此评价整体中文语义质量。
-- **未覆盖**：真实中文 IME 候选框、默认 12k 预算下的自然长对话摘要、系统性的 embedding 质量/多模型对比。
+- **未覆盖**：真实中文 IME 候选框、系统性的 embedding 质量/多模型对比。
 - **产品预设**：模型设置新增 DeepSeek 预设，自动填 base URL 与 `deepseek-flash`，仍需手动输入 Key。
 
 ## 6. 当前结论
 
-- 本地测试与 fake provider 覆盖已完成；DeepSeek flash 短会谈、危机卡 TUI、28 轮自然多轮会谈（6k 精简摘要）与合成长上下文摘要已验收；qwen3-embedding:0.6b 完成单组真实回填/召回；默认 12k 自然摘要未验收。
+- 本地测试与 fake provider 覆盖已完成；DeepSeek flash 短会谈、危机卡 TUI、28 轮自然多轮会谈、默认 12k 自然摘要与合成长上下文摘要已验收；qwen3-embedding:0.6b 完成单组真实回填/召回。
 - 已用真实 PTY（80×24）完成一轮主题/NO_COLOR 视觉验收：
   - 设置页切换浅色后 config.toml 写入 theme = "light"；
   - 浅色界面输出 truecolor ANSI；

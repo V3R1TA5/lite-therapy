@@ -46,6 +46,7 @@ type View =
   | 'contextBudget'
   | 'contextAudits'
   | 'changePass'
+  | 'autoUnlock'
   | 'modelEdit'
   | 'modelInfo'
   | 'dataPaths'
@@ -96,6 +97,7 @@ type SettingsAction =
   | 'wipe'
   | 'help'
   | 'changePass'
+  | 'autoUnlock'
   | 'modelEdit'
   | 'modelInfo'
   | 'dataPaths'
@@ -145,6 +147,8 @@ export function HomeScreen(props: HomeScreenProps) {
   } = props;
   const [view, setView] = useState<View>('menu');
   const [notice, setNotice] = useState(initialNotice ?? '');
+  const [autoUnlockPassword, setAutoUnlockPassword] = useState('');
+  const [autoUnlockRunning, setAutoUnlockRunning] = useState(false);
   const [error, setError] = useState('');
   const [pendingMemo, setPendingMemo] = useState<MemoRecord | null>(null);
   const [backupPassword, setBackupPassword] = useState('');
@@ -1241,6 +1245,83 @@ export function HomeScreen(props: HomeScreenProps) {
     );
   }
 
+  if (view === 'autoUnlock') {
+    const enabled = service.hasAutoUnlock();
+    if (enabled) {
+      return (
+        <ScreenFrame
+          title={messages.settings.autoUnlockDisableTitle}
+          footer="↑↓ 选择 · Enter 确认 · Esc 返回"
+        >
+          <Text wrap="wrap">{messages.settings.autoUnlockDisableHint}</Text>
+          <Box marginTop={1}>
+            <SelectList
+              key="home-auto-unlock-disable"
+              options={[
+                { value: 'disable' as const, label: messages.settings.autoUnlockDisableAction },
+                { value: 'back' as const, label: messages.settings.autoUnlockBack },
+              ]}
+              onEscape={() => go('settings')}
+              onSelect={(value) => {
+                if (value === 'back') {
+                  go('settings');
+                  return;
+                }
+                resetPassphraseForm();
+                setView('changePass');
+              }}
+            />
+          </Box>
+        </ScreenFrame>
+      );
+    }
+    return (
+      <ScreenFrame title={messages.settings.autoUnlockEnableTitle} footer="Enter 开启 · Esc 返回">
+        <Text wrap="wrap">{messages.settings.autoUnlockEnableHint}</Text>
+        <Box marginTop={1}>
+          <SingleLineInput
+            value={autoUnlockPassword}
+            onChange={setAutoUnlockPassword}
+            onSubmit={(value) => {
+              if (value.length === 0) {
+                setError('请输入当前启动密码。');
+                return;
+              }
+              setAutoUnlockRunning(true);
+              setError('');
+              void service
+                .enableAutoUnlock(value)
+                .then(() => {
+                  setAutoUnlockPassword('');
+                  setAutoUnlockRunning(false);
+                  setNotice(messages.settings.autoUnlockEnabled);
+                  setView('settings');
+                })
+                .catch((enableError: unknown) => {
+                  setAutoUnlockRunning(false);
+                  setError(errorMessage(enableError));
+                });
+            }}
+            onEscape={() => go('settings')}
+            placeholder={messages.settings.autoUnlockEnablePlaceholder}
+            disabled={autoUnlockRunning}
+            mask
+          />
+        </Box>
+        {autoUnlockRunning ? (
+          <Box marginTop={1}>
+            <Text color={uiColor('warning')}>正在开启自动解锁…</Text>
+          </Box>
+        ) : null}
+        {error.length > 0 ? (
+          <Box marginTop={1}>
+            <Text color={uiColor('danger')}>{error}</Text>
+          </Box>
+        ) : null}
+      </ScreenFrame>
+    );
+  }
+
   if (view === 'settings') {
     const settingsOptions = [
       {
@@ -1272,6 +1353,12 @@ export function HomeScreen(props: HomeScreenProps) {
       { value: 'diagnostics' as const, label: messages.settings.diagnostics },
       { value: 'help' as const, label: messages.help.title },
       { value: 'about' as const, label: messages.settings.about },
+      {
+        value: 'autoUnlock' as const,
+        label: service.hasAutoUnlock()
+          ? messages.settings.autoUnlockOn
+          : messages.settings.autoUnlockOff,
+      },
       { value: 'back' as const, label: messages.settings.back },
     ];
     return (
@@ -1326,6 +1413,9 @@ export function HomeScreen(props: HomeScreenProps) {
             } else if (value === 'changePass') {
               resetPassphraseForm();
               setView('changePass');
+            } else if (value === 'autoUnlock') {
+              setAutoUnlockPassword('');
+              go('autoUnlock');
             } else if (value === 'modelEdit') {
               go('modelEdit');
             } else if (value === 'modelInfo') {

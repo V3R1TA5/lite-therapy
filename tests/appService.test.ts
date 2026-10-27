@@ -226,6 +226,27 @@ describe('AppService', () => {
     service.shutdown();
   });
 
+  it('enables and disables auto-unlock on an existing vault', async () => {
+    const paths = makePaths();
+    const service = makeService(paths);
+    const spaced = '  spaced passphrase 123  ';
+    await service.beginSetup(spaced);
+    await service.enableAutoUnlock(spaced);
+    expect(service.hasAutoUnlock()).toBe(true);
+
+    service.lock();
+    await expect(service.autoUnlock()).resolves.toMatchObject({ phase: 'unlocked' });
+    await service.changePassphrase('', 'new spaced pass 123');
+    expect(service.hasAutoUnlock()).toBe(false);
+    service.lock();
+    await expect(service.autoUnlock()).rejects.toMatchObject({ code: 'NOT_SETUP' });
+    await expect(service.unlock('new spaced pass 123')).resolves.toMatchObject({
+      phase: 'unlocked',
+    });
+
+    service.shutdown();
+  });
+
   it('recovers a vault with the recovery phrase and keeps the data', async () => {
     const paths = makePaths();
     const service = makeService(paths);

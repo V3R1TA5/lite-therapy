@@ -15,7 +15,7 @@
 ### 验证
 
 - app TUI 新增一条 Esc 回退测试：恢复短语页 → 密码确认 → 密码页。
-- 39 个测试文件 / 199 个测试通过；typecheck、lint 通过。
+- 39 个测试文件 / 201 个测试通过；typecheck、lint 通过。
 
 ## 2026-10-27 — 密码可选 / 本机自动解锁
 
@@ -28,6 +28,7 @@
 - 启动时如果存在自动解锁密钥，App 直接自动解锁；手动锁定后，锁定屏可按 **Ctrl+A** 使用本机密钥解锁。
 - 自动解锁密钥在修改密码、恢复短语恢复、恢复备份后移除，避免旧密钥继续绕过新密码。
 - 自动解锁用户可在改密页把当前密码留空，设置新密码后会关闭自动解锁；备份要求先设置密码，避免产生无法恢复的备份。
+- 设置页新增“本机自动解锁”：已有保险库可输入当前密码开启，开启时不改密码，只把当前密码写入 v1 base64 密钥文件。关闭前必须设置新启动密码，设置成功后删除密钥；避免跳过密码创建的模式被直接锁死。
 - 导出/彻底删除在自动解锁模式下可用，密码输入可留空。
 
 ### 安全权衡
@@ -40,7 +41,7 @@
 
 - appService 测试覆盖自动密钥 0600、锁定后自动解锁、空密码改密、改密后密钥移除、自动模式拒绝无密码备份。
 - app TUI 测试覆盖向导自动解锁选项、跳过恢复短语、启动自动解锁。
-- 39 个测试文件 / 199 个测试通过；typecheck、lint 通过。
+- 39 个测试文件 / 201 个测试通过；typecheck、lint 通过。
 
 ---
 
@@ -62,7 +63,7 @@
 ### 验证
 
 - safetyRules 新增 4 个测试：混用第三人与本人、先否定后本人、逗号后父母主语，以及“我觉得他 / 我先生”不会被“我”误切成本人；chatScreen 新增 mixed contexts 危机卡测试。
-- 39 个测试文件 / 199 个测试通过；typecheck 通过；npm run eval:safety 12/12。
+- 39 个测试文件 / 201 个测试通过；typecheck 通过；npm run eval:safety 12/12。
 - 真实 DeepSeek 输入“朋友说他想自杀，其实我也想过自杀”：返回 done，风险 concern，contexts=[third_party,self]；回复同时确认用户本人与朋友的安全，不提供方法。
 - 首次真实检查 detector=rule-fallback，规则兜底仍保持 concern；将分类器 maxTokens 从 300 提到 1000、默认超时从 8s 提到 12s 后复测 detector=rule+model。300 token 对推理模型偏紧，这次修复降低了截断 JSON 的概率，但不保证分类器永不失败。
 
@@ -93,7 +94,7 @@
 - 额外覆盖“我以前自杀过，朋友说他想自杀，我也有过”：历史本人风险 + 第三人称 + 续接时仍补 self 语境，不只给第三人称提示。
 - 多段第三人称之间夹本人续接（“我也有过。另一个朋友也……”）仍保留 self；“我也有同样的想法”为 concern，“我也有同样的疑问”为 none。
 - “我另一个朋友也想过 / 我妈妈也想过”保持第三人称，不补 self；“我最近也想过”仍为 self。
-- 39 个测试文件 / 199 个测试通过；typecheck、lint 通过。
+- 39 个测试文件 / 201 个测试通过；typecheck、lint 通过。
 - 真实 DeepSeek 输入“朋友说他想自杀，我也有过”：risk concern、contexts=[third_party,self]、detector=rule+model；回复同时确认朋友安全，并追问用户是过去还是现在。
 - 真实 DeepSeek 输入“朋友说他想自杀，我也想过要报警”：risk concern、contexts=[third_party]（model 复核），没有 self；TUI 会走第三人称非阻断提示。
 - 真实 DeepSeek 输入“朋友说他想自杀，我另一个朋友也想过”：risk concern、contexts=[third_party]、detector=model，没有 self；规则没有把第二个“朋友”误切成本人。
@@ -121,7 +122,7 @@
 ### 验证
 
 - memoryService 新增“未回填时 embed 调用为 0”测试；后续又补了 provider 方法绑定回归，当前 9 个测试。
-- 39 个测试文件 / 199 个测试通过；typecheck、lint 通过。
+- 39 个测试文件 / 201 个测试通过；typecheck、lint 通过。
 
 ### 风险
 
@@ -148,7 +149,7 @@
 ### 回归
 
 - 首次真实验收直接崩溃：`const embed = provider.embed; embed(...)` 丢失了 `this`，OpenAICompatibleProvider 读不到 `this.fetchImpl`。已改回 `provider.embed(...)` 方法调用，并加 provider 内部状态绑定的回归测试。
-- memoryService 当前 9 个测试；总计 39 个文件 / 199 个测试。
+- memoryService 当前 9 个测试；总计 39 个文件 / 201 个测试。
 
 ### 限制
 
@@ -196,7 +197,7 @@
 
 - appService 测试插入一张带 `[0.1, 0.2]` 向量的卡：只切开关时向量保留；把模型改成 `nomic-embed-text` 后向量变为 null。
 - 真实数据副本复验：qwen 1024 维卡 → 清空模型设置后 null → 恢复 qwen 后重新回填为 1024 维。
-- 39 个测试文件 / 199 个测试通过；typecheck、lint 通过。
+- 39 个测试文件 / 201 个测试通过；typecheck、lint 通过。
 
 ### 限制
 
@@ -261,7 +262,7 @@
 - **主题/NO_COLOR**：config.theme 支持 dark/light；统一 uiColor 色板；NO_COLOR 下关闭 FORCE_COLOR，连 dim 也不输出。
 - **设置/备份 TUI 测试**：主题切换持久化、备份列表打开恢复说明、Esc 返回；彻底删除警示可取消；恢复密码入口可退出；修复备份列表双 SelectList 抢 Enter 与 wipeWarning 无 Esc 的问题。
 - **IME 光标**：MultilineInput / SingleLineInput 用 Ink useCursor + measureElement 定位；宽字符列测试。
-- **验证**：appService（10）覆盖备份文件/权限、备份浏览、错误密码拒绝、恢复后的数据回退与服务锁定、彻底删除目录与 NOT_SETUP、全量 JSON 0600/无密钥；homeContext（11）覆盖全量导出密码与结果页；exportService（4）覆盖 Markdown/JSON、勾选与 0600；当前 39 个测试文件 / 199 个测试。
+- **验证**：appService（11）覆盖备份文件/权限、备份浏览、错误密码拒绝、恢复后的数据回退与服务锁定、彻底删除目录与 NOT_SETUP、全量 JSON 0600/无密钥；homeContext（12）覆盖全量导出密码与结果页；exportService（4）覆盖 Markdown/JSON、勾选与 0600；当前 39 个测试文件 / 201 个测试。
 
 ### 尚未完成（M6 剩余）
 
@@ -294,7 +295,7 @@
 - **历史版本**：008 迁移新增 memory_card_revisions；编辑记忆时记录修改前后文本，详情页可查看历史。
 - **召回评分**：FTS 候选 + 本地卡片覆盖率、FTS 排名、置信度、新鲜度与重复引用惩罚；召回日志 reason 记录 fts5+coverage。
 - **召回可解释**：记忆详情展示最近 5 次召回会谈、评分与日期。
-- **验证**：39 个测试文件 / 199 个测试；memoryService（9）覆盖提取拒绝、去重、敏感过滤、召回日志、冲突标记、历史版本、覆盖率排序、embedding 召回与普通卡回填；memoriesScreen TUI（5）覆盖来源/编辑/归档/删除/筛选/标签/清空/按会谈删除；chatService（12）覆盖召回注入与开关；sessionService（13）覆盖单次会谈关闭记忆。
+- **验证**：39 个测试文件 / 201 个测试；memoryService（9）覆盖提取拒绝、去重、敏感过滤、召回日志、冲突标记、历史版本、覆盖率排序、embedding 召回与普通卡回填；memoriesScreen TUI（5）覆盖来源/编辑/归档/删除/筛选/标签/清空/按会谈删除；chatService（12）覆盖召回注入与开关；sessionService（13）覆盖单次会谈关闭记忆。
 
 ### 修改 / 新增文件
 
@@ -336,7 +337,7 @@
 - **内部记录只读页**：单次记录 / 纵向理解 / 督导 / 备忘录；警示“不是对你的结论”，PgUp/PgDn 滚动，不提供编辑。
 - **备忘录带入**：新建会谈询问是否带入最近 ready 备忘录，冻结到 memory_snapshot_json；ChatService 注入并审计 memoUsed。
 - **来信信箱**：主页未读入口、阅读页、已读标记；来信正文不进入内部记录。
-- **验证**：39 个测试文件 / 199 个测试；postSessionService（5）覆盖六任务成功、失效、备忘录失败不阻塞来信、running 重置、退避重试；postSessionScreen TUI（3）覆盖自动运行、失败重试与内部记录只读页；AppService 覆盖入队、后台共享 promise、重启解锁自动续跑与执行；断言 memo 请求包含督导意见。
+- **验证**：39 个测试文件 / 201 个测试；postSessionService（5）覆盖六任务成功、失效、备忘录失败不阻塞来信、running 重置、退避重试；postSessionScreen TUI（3）覆盖自动运行、失败重试与内部记录只读页；AppService 覆盖入队、后台共享 promise、重启解锁自动续跑与执行；断言 memo 请求包含督导意见。
 
 ### 修改 / 新增的主要文件
 
@@ -380,7 +381,7 @@
 - **脱敏审计**：每轮写入 context_audits（message_id、prompt/history token、消息数、truncated、summary/memo/memory 注入、warnings）与消息级 entries_json（角色、token、是否进入请求），不记录正文。
 - **预算设置**：AppConfig.context 暴露 history / summaryTrigger / recentTarget；设置页提供精简 / 保守 / 更长三档；ChatService 按配置注入预算。
 - **审计查看**：设置页「最近上下文审计」按会谈展示时间、token、消息数、裁剪/摘要、条目计数与警告，不显示正文。
-- **验证**：M3 完成时 32 个测试文件 / 135 个测试；当前总 39 个文件 / 199 个测试；真实 PTY + fake 模型/分类器验证危机卡出现、安全动作与会话继续；长历史/摘要失败/增量摘要/预算裁剪/审计/设置页由测试覆盖。
+- **验证**：M3 完成时 32 个测试文件 / 135 个测试；当前总 39 个文件 / 201 个测试；真实 PTY + fake 模型/分类器验证危机卡出现、安全动作与会话继续；长历史/摘要失败/增量摘要/预算裁剪/审计/设置页由测试覆盖。
 
 ### 修改 / 新增的主要文件
 

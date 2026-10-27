@@ -57,7 +57,7 @@ cd lite-therapy
 现在能跑：
 
 - 首次设置：知情同意、选择解锁方式（密码 + 12 词恢复短语、密码但跳过恢复短语、或本机自动解锁）、称呼 / 年龄提示 / 时区、模型配置与连接测试；支持 Esc 返回上一项，模型可暂时跳过。
-- 保险库与锁定：create / unlock / recover / rewrap；自动解锁密钥（0600）启动自动解锁、锁定屏 Ctrl+A；改密/恢复/恢复备份后移除；手动锁定与 0/5/10/30 分钟闲置自动锁定；失败递增等待；锁定时先停止流式并等待落库，再清空内存密钥。
+- 保险库与锁定：create / unlock / recover / rewrap；自动解锁密钥（0600）启动自动解锁、锁定屏 Ctrl+A；设置页可对已有保险库开启；关闭前必须设新密码；改密/恢复/恢复备份后移除；手动锁定与 0/5/10/30 分钟闲置自动锁定；失败递增等待；锁定时先停止流式并等待落库，再清空内存密钥。
 - 真实会谈：OpenAI-compatible / Ollama；SSE 流式；停止、重试、PgUp/PgDn 滚动；单实例锁。
 - 会谈生命周期：新建、继续当前、继续上次、结束、删除；空会谈清理；标题取首条用户消息前 24 字。
 - 持久化：sessions / messages / model_usage；流式草稿每 500ms 落库；崩溃后 streaming 标 interrupted；消息与 token 估算入库。
@@ -67,7 +67,7 @@ cd lite-therapy
 - 安全：规则初筛 + 模型复核 + 跨轮升级 + risk_events；危机卡动作与本地资源；不内置号码。
 - 上下文：历史 24k / 摘要触发 12k / 单条 16k token；设置页三档可调；摘要增量更新；审计只记 ID、token 与警告。
 - 会后：005 队列；结束会谈进入进度页自动运行六类任务；5s/20s/60s 退避；备忘录五段结构校验；继续会谈失效；备忘录带入；来信信箱；内部记录只读。
-- 39 个测试文件 / 199 个测试、构建、真实 PTY + 本地 fake 模型/分类器冒烟。
+- 39 个测试文件 / 201 个测试、构建、真实 PTY + 本地 fake 模型/分类器冒烟。
 - 规格、进度、来源说明、NOTICE、Apache-2.0、CI。
 
 ### 边界与仍未做
@@ -97,7 +97,7 @@ npm run build
 
 - doctor 全部 PASS，包括 migrations（001_init + 002_sessions + 003_safety + 004_context_audit_entries + 005_post_session + 006_memory + 007_session_memory_switch + 008_memory_history）、sqlcipher、fts5、reopen、wrong_key、vault、secrets、config、setup 与文件权限。
 - typecheck 无输出。
-- test 显示 39 个测试文件、199 个测试全部通过。
+- test 显示 39 个测试文件、201 个测试全部通过。
 - build 产出 dist/cli.js，无报错。
 
 想手动看界面：
@@ -213,13 +213,13 @@ NODE_ENV=development npm install --include=dev
 
 ### 测试
 
-- appConfig（5）、appService（10）、endpoint（4）、secrets（4）、vaultStore（3）、vault（9）
+- appConfig（5）、appService（11）、endpoint（4）、secrets（4）、vaultStore（3）、vault（9）
 - migrations（3）、database（2）、sessionService（13）、messageRecovery（1）
 - chatService（12）、tokens（4）、openaiCompatible（7）、exportService（4）、instanceLock（3）
 - prompts（4）、safetyRules（14）、riskClassifier（3）、safetyService（7）、crisisResources（4）、contextService（7）、postSessionService（5）、memoryService（9）、theme（2）
 - setupPolicy（4）、lockout（1）、connectionTest（5）、doctor（1）
-- app TUI（9）、diagnostics TUI（1）、chatScreen TUI（10）、crisisCard TUI（2）、homeContext TUI（11）、modelSetup TUI（1）、letters TUI（1）、memories TUI（5）、postSession TUI（3）、sessionList TUI（1）、multiline-input（5）
-- 合计 39 个文件 / 199 个测试。
+- app TUI（9）、diagnostics TUI（1）、chatScreen TUI（10）、crisisCard TUI（2）、homeContext TUI（12）、modelSetup TUI（1）、letters TUI（1）、memories TUI（5）、postSession TUI（3）、sessionList TUI（1）、multiline-input（5）
+- 合计 39 个文件 / 201 个测试。
 
 ### 文档与工程
 
@@ -278,7 +278,7 @@ lite-therapy/
 │  │  ├─ MultilineInput.tsx    多行输入
 │  │  └─ runTui.tsx            Ink 入口与单实例锁
 │  └─ types/                   SQLCipher 类型 shim
-├─ tests/                      Vitest（39 个文件 / 199 个测试）
+├─ tests/                      Vitest（39 个文件 / 201 个测试）
 ├─ spikes/                     独立验证
 ├─ docs/
 │  ├─ REQUIREMENTS.md          v0.1 规格

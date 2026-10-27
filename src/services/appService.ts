@@ -255,7 +255,9 @@ export class AppService {
 
   private writeAutoUnlockKey(passphrase: string): void {
     mkdirSync(this.paths.config, { recursive: true, mode: 0o700 });
-    writeFileAtomic(this.autoUnlockPath(), passphrase + '\n', 0o600);
+    // base64 保留首尾空格等原始字符；v1: 便于以后换格式。
+    const encoded = 'v1:' + Buffer.from(passphrase, 'utf8').toString('base64');
+    writeFileAtomic(this.autoUnlockPath(), encoded + '\n', 0o600);
   }
 
   private removeAutoUnlockKey(): void {
@@ -264,7 +266,10 @@ export class AppService {
 
   private readAutoUnlockSecret(): string | null {
     try {
-      const secret = readFileSync(this.autoUnlockPath(), 'utf8').trim();
+      const raw = readFileSync(this.autoUnlockPath(), 'utf8').trim();
+      const secret = raw.startsWith('v1:')
+        ? Buffer.from(raw.slice(3), 'base64').toString('utf8')
+        : raw;
       return secret.length >= 8 ? secret : null;
     } catch {
       return null;
@@ -295,6 +300,15 @@ export class AppService {
       throw new AppServiceError('NOT_SETUP', '没有可用的自动解锁密钥。');
     }
     return await this.unlock(passphrase);
+  }
+
+  async enableAutoUnlock(passphrase: string): Promise<void> {
+    this.requireUnlocked();
+    if (passphrase.length === 0) {
+      throw new AppServiceError('INVALID_PASSPHRASE', '请输入当前启动密码。');
+    }
+    await this.verifyPassphrase(passphrase);
+    this.writeAutoUnlockKey(passphrase);
   }
 
   async beginSetup(

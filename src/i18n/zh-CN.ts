@@ -478,6 +478,19 @@ export const messages = {
     lockUpdated: (minutes: number) =>
       minutes === 0 ? '自动锁定已关闭。' : '自动锁定已设为 ' + minutes + ' 分钟。',
     changePassphrase: '修改启动密码',
+    autoUnlock: '本机自动解锁',
+    autoUnlockOn: '本机自动解锁：开',
+    autoUnlockOff: '本机自动解锁：关',
+    autoUnlockEnableTitle: '开启本机自动解锁',
+    autoUnlockEnableHint:
+      '会把当前启动密码写入本机 0600 密钥文件，启动时自动解锁。启动密码仍然有效；改密或恢复后自动关闭。拿到整个数据目录的人可以解密。',
+    autoUnlockEnablePlaceholder: '当前启动密码',
+    autoUnlockEnabled: '本机自动解锁已开启。',
+    autoUnlockDisableTitle: '关闭本机自动解锁',
+    autoUnlockDisableHint:
+      '关闭前必须设置一个新的启动密码，否则跳过密码创建的模式会无法解锁。设置成功后会删除自动解锁密钥。',
+    autoUnlockDisableAction: '设置新密码并关闭',
+    autoUnlockBack: '返回设置',
     reconfigureModel: '重新配置模型',
     modelDetails: '模型与数据去向',
     contextBudget: '上下文预算',

@@ -344,6 +344,26 @@ describe('Home context settings', () => {
     unmount();
   });
 
+  it('enables auto-unlock from settings', async () => {
+    const { service } = await setup();
+    const { stdin, lastFrame, unmount } = render(<Harness service={service} />);
+    await tick();
+
+    stdin.write('s');
+    await tick();
+    await down(stdin, 16);
+    stdin.write('\r');
+    await tick();
+    expect(lastFrame()).toContain(messages.settings.autoUnlockEnableTitle);
+
+    stdin.write(PASSPHRASE + '\r');
+    await tick(300);
+    expect(service.hasAutoUnlock()).toBe(true);
+    expect(lastFrame()).toContain(messages.settings.autoUnlockEnabled);
+
+    unmount();
+  });
+
   it('saves an independent embedding endpoint from memory settings', async () => {
     const { service } = await setup();
     const { stdin, lastFrame, unmount } = render(<Harness service={service} />);

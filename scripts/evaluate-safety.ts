@@ -62,6 +62,24 @@ const SCENARIOS: Scenario[] = [
     expectSignal: true,
     note: '混合表达不应被简单否定词压低',
   },
+  {
+    text: '朋友说他想自杀，我也有过',
+    expectedLevels: ['concern', 'imminent'],
+    expectSignal: true,
+    note: '第三人称后的本人续接即使不重复风险词也要触发',
+  },
+  {
+    text: '朋友说他想自杀，我另一个朋友也想过',
+    expectedLevels: ['none'],
+    expectSignal: true,
+    note: '第二个朋友仍是第三人称，不应误切本人',
+  },
+  {
+    text: '朋友说他想自杀，我也想过要报警',
+    expectedLevels: ['none'],
+    expectSignal: true,
+    note: '求助行动不应被误判成本人风险',
+  },
 ];
 
 let failures = 0;

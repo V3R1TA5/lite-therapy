@@ -35,11 +35,21 @@ export function saveVaultFile(filePath: string, vault: VaultFile): void {
 export interface FilePermissionReport {
   mode: number;
   tooOpen: boolean;
+  note?: string;
 }
 
+export const WINDOWS_ACL_NOTE = 'Windows ACL（不使用 Unix mode）';
+
 /** 只检查，不擅自改权限；doctor 与设置页据此提示用户。 */
-export function inspectFilePermissions(filePath: string): FilePermissionReport {
+export function inspectFilePermissions(
+  filePath: string,
+  platform: NodeJS.Platform = process.platform,
+): FilePermissionReport {
   const mode = statSync(filePath).mode & 0o777;
+  if (platform === 'win32') {
+    // chmod 在 Windows 上只影响只读位，不能表达 0600；实际隔离依赖用户目录 ACL。
+    return { mode, tooOpen: false, note: WINDOWS_ACL_NOTE };
+  }
   return { mode, tooOpen: (mode & 0o077) !== 0 };
 }
 

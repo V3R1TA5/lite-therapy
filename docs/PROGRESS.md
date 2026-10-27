@@ -3,6 +3,38 @@
 > 交接档：../HANDOFF.md
 > 代理规则：../AGENTS.md
 
+## 2026-10-27 — 跨平台构建与平台惯例 HOME
+
+### 已完成
+
+- 回滚项目内 `.lite-therapy/` 默认值；恢复 `env-paths`，回到 Linux XDG / Windows AppData / macOS Library 惯例，`LITE_THERAPY_HOME` 只作便携与测试覆盖。
+- Windows 不再套用 Unix 0600/0700：`inspectFilePermissions` 返回 `Windows ACL` 说明，`doctor` 的 config/database/vault 权限检查不再误报；测试用 `tests/helpers/permissions.ts` 在 Windows 跳过 POSIX mode 断言。
+- 修复 Windows 打开 SQLCipher 时对打开中的 WAL/SHM 执行 chmod 抛 EPERM 的问题：Windows 跳过 Unix chmod，交给用户目录 ACL。
+- 新增 `npm run release:build`：在 Linux/Windows 上跑 `release:check`，生成 `release/*.tgz`、SHA256 与 `build-info.json`。
+- 增加 `.npmrc` 的 `ignore-scripts=true`：SQLCipher 走预编译，安装依赖不触发 node-gyp；Linux 隔离副本验证 `npm ci`、build、test、doctor 均通过。
+- CI 矩阵改为 Ubuntu/Windows × Node 22/24，直接执行 `npm run release:build` 并上传 Linux Node 24 产物；macOS 稍后。
+- 同步 README、HANDOFF、AGENTS、docs/REQUIREMENTS 与 docs/EVALUATION 的平台、数据位置和构建说明。
+
+### 验证
+
+- 40 个测试文件 / 210 个测试通过；typecheck、lint 通过。
+- Linux 上 `npm run release:build` 生成 tarball 与 SHA256。
+- Windows Node 22 + Wine：`npm ci --ignore-scripts` 成功；Windows 预编译 SQLCipher 可打开、迁移与 doctor 全 PASS。Wine 无法加载 tsup/Vitest 的 native binding，真实 Windows CI 与终端仍需机器验收。
+
+## 2026-10-27 — 项目内数据目录与相对路径（已回滚，见上）
+
+### 已完成
+
+- 默认数据根目录改为当前工作目录下的 `.lite-therapy/`，数据、配置、日志分别在 `data/`、`config/`、`log/`；`LITE_THERAPY_HOME` 仍可覆盖，相对路径按当前工作目录解析。
+- `.lite-therapy/` 加入 `.gitignore`；`check:secrets` 也跳过该目录，避免扫描本地加密数据。
+- README、HANDOFF、AGENTS、docs/REQUIREMENTS 与 docs/EVALUATION 中的本机绝对路径改为相对路径，并同步新的默认数据位置。
+- 移除不再使用的 `env-paths` 依赖。
+
+### 验证
+
+- 新增 `tests/paths.test.ts`，覆盖默认目录、相对覆盖、绝对覆盖与空白覆盖。
+- 40 个测试文件 / 208 个测试通过；typecheck、lint 通过。
+
 ## 2026-10-27 — 设置向导返回
 
 ### 已完成

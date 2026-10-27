@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -14,6 +14,11 @@ import type { ChatProvider } from '../src/providers/types.js';
 import { AppService } from '../src/services/appService.js';
 import { LockoutGate } from '../src/services/lockout.js';
 import { ScriptedChatProvider } from './helpers/fakeChatProvider.js';
+import {
+  expectPosixNoGroupOrOther,
+  expectPosixPrivateDir,
+  expectPosixPrivateFile,
+} from './helpers/permissions.js';
 
 const TEST_KDF = { N: 1024, r: 8, p: 1, dkLen: 32 } as const;
 const PASSPHRASE = 'first passphrase 123';
@@ -76,7 +81,7 @@ describe('AppService', () => {
 
     const { recoveryPhrase } = await service.beginSetup(PASSPHRASE);
     expect(recoveryPhrase.split(' ')).toHaveLength(12);
-    expect(statSync(join(paths.config, 'vault.json')).mode & 0o777).toBe(0o600);
+    expectPosixPrivateFile(join(paths.config, 'vault.json'));
     expect((await service.inspect()).onboardingComplete).toBe(false);
 
     // 中途退出再解锁，应当接着完成设置而不是重设密码。
@@ -165,8 +170,8 @@ describe('AppService', () => {
     const secretsText = readFileSync(join(paths.config, 'secrets.enc'), 'utf8');
     expect(configText).not.toContain(API_KEY);
     expect(secretsText).not.toContain(API_KEY);
-    expect(statSync(join(paths.config, 'config.toml')).mode & 0o777).toBe(0o600);
-    expect(statSync(join(paths.config, 'secrets.enc')).mode & 0o777).toBe(0o600);
+    expectPosixPrivateFile(join(paths.config, 'config.toml'));
+    expectPosixPrivateFile(join(paths.config, 'secrets.enc'));
 
     service.lock();
     expect(service.snapshot().phase).toBe('locked');
@@ -206,7 +211,7 @@ describe('AppService', () => {
     expect(created.recoveryPhrase.split(' ')).toHaveLength(12);
     expect(service.hasAutoUnlock()).toBe(true);
     const keyPath = join(paths.config, 'auto-unlock.key');
-    expect(statSync(keyPath).mode & 0o777).toBe(0o600);
+    expectPosixPrivateFile(keyPath);
     expect(readFileSync(keyPath, 'utf8').trim().length).toBeGreaterThanOrEqual(8);
 
     service.lock();
@@ -397,11 +402,11 @@ describe('AppService', () => {
     expect(postSession.jobs.every((job) => job.status === 'ready')).toBe(true);
 
     const exportPath = await service.exportSession(session.id, PASSPHRASE);
-    expect(statSync(exportPath).mode & 0o777).toBe(0o600);
+    expectPosixPrivateFile(exportPath);
     expect(readFileSync(exportPath, 'utf8')).toContain('今天有点累');
 
     const allPath = await service.exportAllData(PASSPHRASE);
-    expect(statSync(allPath).mode & 0o777).toBe(0o600);
+    expectPosixPrivateFile(allPath);
     const allData = JSON.parse(readFileSync(allPath, 'utf8')) as {
       sessions: Array<{ session: { id: string } }>;
       memories: unknown[];
@@ -464,9 +469,9 @@ describe('AppService', () => {
     expect(files).toContain('config.toml');
     expect(files).toContain('RESTORE.txt');
     expect(files).not.toContain('secrets.enc');
-    expect(statSync(dir).mode & 0o777).toBe(0o700);
+    expectPosixPrivateDir(dir);
     for (const file of files) {
-      expect(statSync(join(dir, file)).mode & 0o077).toBe(0);
+      expectPosixNoGroupOrOther(join(dir, file));
     }
     const listed = service.listManualBackups();
     expect(listed.map((backup) => backup.path)).toContain(dir);

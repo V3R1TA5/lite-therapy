@@ -34,7 +34,8 @@
     "eval:embedding": "tsx scripts/evaluate-embedding.ts",
     "check:licenses": "tsx scripts/check-licenses.ts",
     "check:secrets": "tsx scripts/check-secrets.ts",
-    "release:check": "npm run check && npm run eval:safety && npm run check:licenses && npm run check:secrets && npm run doctor && npm run build"
+    "release:check": "npm run check && npm run eval:safety && npm run check:licenses && npm run check:secrets && npm run doctor && npm run build",
+    "release:build": "tsx scripts/build-release.ts"
   },
   "dependencies": {
     "@scure/bip39": "^2.4.0",

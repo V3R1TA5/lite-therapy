@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -12,6 +12,7 @@ import {
   resolveTimezone,
   saveAppConfig,
 } from '../src/config/appConfig.js';
+import { expectPosixPrivateFile } from './helpers/permissions.js';
 
 const roots: string[] = [];
 
@@ -33,7 +34,7 @@ describe('appConfig', () => {
     const config = createInitialConfig(new Date('2026-10-26T00:00:00.000Z'), 'Asia/Tokyo');
     saveAppConfig(file, config);
 
-    expect(statSync(file).mode & 0o777).toBe(0o600);
+    expectPosixPrivateFile(file);
     const loaded = loadAppConfig(file);
     expect(loaded?.profile.timezone).toBe('Asia/Tokyo');
     expect(loaded?.lock.timeoutMinutes).toBe(10);

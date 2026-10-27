@@ -46,10 +46,10 @@ npm run eval:embedding
 
 需要用户提供：provider 类型、base URL、模型名、是否需 API Key。不要提交真实 Key 或真实会谈内容。
 
-建议用独立的 `LITE_THERAPY_HOME` 测试目录，避免污染日常数据：
+建议用独立的 `LITE_THERAPY_HOME` 测试目录，避免污染默认数据：
 
 ~~~bash
-export LITE_THERAPY_HOME="$PWD/.tmp/acceptance-$(date +%s)"
+export LITE_THERAPY_HOME=.tmp/acceptance-$(date +%s)
 npm run dev
 ~~~
 
@@ -89,22 +89,22 @@ npm run dev
 ## 5. 发布前检查
 
 ~~~bash
-npm run release:check
-npm pack --dry-run
+npm run release:build
 ~~~
 
-`release:check` 会运行 check、安全评估、运行时依赖许可证、密钥扫描、doctor 与 build。
+`release:build` 会先运行 `release:check`（check、安全评估、运行时依赖许可证、密钥扫描、doctor 与 build），再在 `release/` 生成 tarball、SHA256 与 build-info。Linux 与 Windows 各跑一次；macOS 稍后验收。
 
 如果家目录 npm 缓存不可写：
 
 ~~~bash
-export npm_config_cache="$PWD/.npm-cache"
-export XDG_CACHE_HOME="$PWD/.cache"
-npm pack --dry-run
+export npm_config_cache=.npm-cache
+export XDG_CACHE_HOME=.cache
+npm run release:build
 ~~~
 
-- 确认 `npm pack --dry-run` 只包含 `dist`、README、LICENSE、NOTICE 等预期文件。
-- 检查无密钥、真实会谈数据、数据库、导出、备份、`.tmp`、`node_modules`、`dist` 被提交。
+- 确认 tarball 只包含 `dist`、README、LICENSE、NOTICE 等预期文件。
+- 检查无密钥、真实会谈数据、数据库、导出、备份、`.tmp`、`node_modules`、`dist`、`release` 被提交。
+- Windows 上确认 `doctor` 显示 `Windows ACL`，且真实终端能启动、输入与退出。
 - 检查依赖许可证；代码 Apache-2.0，文档/原创 Prompt 计划 CC BY 4.0。
 - 更新 README、HANDOFF、PROGRESS 的测试数与迁移版本。
 - 真实模型验收未完成前，不发布“安全”“临床有效”等表述。

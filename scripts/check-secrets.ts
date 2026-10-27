@@ -8,6 +8,7 @@ const SKIP = new Set([
   '.cache',
   'coverage',
   'dist',
+  'release',
   'node_modules',
   // 测试里使用明显假的 sk-test 夹具；发布扫描不把它当真实密钥。
   'tests',

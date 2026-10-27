@@ -5,6 +5,7 @@ coverage/
 .cache/
 .node-gyp/
 .tmp/
+release/
 *.db
 *.db-shm
 *.db-wal

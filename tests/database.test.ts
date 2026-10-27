@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, statSync } from 'node:fs';
+import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -9,6 +9,7 @@ import {
   getSqliteVersion,
   openEncryptedDatabase,
 } from '../src/db/database.js';
+import { expectPosixPrivateFile } from './helpers/permissions.js';
 
 function withTempDir<T>(fn: (dir: string) => T): T {
   const dir = mkdtempSync(join(tmpdir(), 'lite-therapy-test-'));
@@ -32,7 +33,7 @@ describe('encrypted database', () => {
 
       expect(getCipherVersion(db)).toBe('sqlcipher');
       expect(getSqliteVersion(db)).toMatch(/^\d+\.\d+/);
-      expect(statSync(path).mode & 0o777).toBe(0o600);
+      expectPosixPrivateFile(path);
       db.close();
 
       assertEncryptedAtRest(path);

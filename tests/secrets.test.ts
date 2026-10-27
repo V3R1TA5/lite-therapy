@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto';
-import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -9,6 +9,7 @@ import {
   loadSecretsFile,
   saveSecretsFile,
 } from '../src/security/secrets.js';
+import { expectPosixPrivateFile } from './helpers/permissions.js';
 
 const roots: string[] = [];
 const DB_KEY = Buffer.alloc(32, 9);
@@ -31,7 +32,7 @@ describe('secrets', () => {
     const file = tempFile();
     saveSecretsFile(file, DB_KEY, KEYS);
 
-    expect(statSync(file).mode & 0o777).toBe(0o600);
+    expectPosixPrivateFile(file);
     expect(readFileSync(file, 'utf8')).not.toContain('sk-live-secret-value');
     expect(loadSecretsFile(file, DB_KEY)).toEqual(KEYS);
   });

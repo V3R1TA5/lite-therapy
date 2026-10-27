@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createInitialConfig, loadAppConfig, saveAppConfig } from '../config/appConfig.js';
@@ -22,9 +22,10 @@ export interface DoctorCheck {
 
 export interface DiagnosticsOptions {
   paths?: AppPaths;
+  platform?: NodeJS.Platform;
 }
 
-function checkUserFiles(checks: DoctorCheck[], paths: AppPaths): void {
+function checkUserFiles(checks: DoctorCheck[], paths: AppPaths, platform: NodeJS.Platform): void {
   try {
     const vaultPath = join(paths.config, 'vault.json');
     const configPath = join(paths.config, 'config.toml');
@@ -40,22 +41,22 @@ function checkUserFiles(checks: DoctorCheck[], paths: AppPaths): void {
     checks.push({ name: 'setup', ok: true, detail: state });
 
     if (existsSync(vaultPath)) {
-      const report = inspectFilePermissions(vaultPath);
+      const report = inspectFilePermissions(vaultPath, platform);
       checks.push({
         name: 'vault_permissions',
         ok: !report.tooOpen,
-        detail: 'mode ' + formatMode(report.mode),
+        detail: report.note ?? 'mode ' + formatMode(report.mode),
       });
     } else {
       checks.push({ name: 'vault_permissions', ok: true, detail: '尚未创建' });
     }
 
     if (existsSync(configPath)) {
-      const report = inspectFilePermissions(configPath);
+      const report = inspectFilePermissions(configPath, platform);
       checks.push({
         name: 'config_permissions',
         ok: !report.tooOpen,
-        detail: 'mode ' + formatMode(report.mode),
+        detail: report.note ?? 'mode ' + formatMode(report.mode),
       });
     } else {
       checks.push({ name: 'config_permissions', ok: true, detail: '尚未创建' });
@@ -72,11 +73,11 @@ function checkUserFiles(checks: DoctorCheck[], paths: AppPaths): void {
           detail: error instanceof Error ? error.message : String(error),
         });
       }
-      const mode = statSync(databasePath).mode & 0o777;
+      const report = inspectFilePermissions(databasePath, platform);
       checks.push({
         name: 'database_permissions',
-        ok: (mode & 0o077) === 0,
-        detail: 'mode ' + formatMode(mode),
+        ok: !report.tooOpen,
+        detail: report.note ?? 'mode ' + formatMode(report.mode),
       });
     } else {
       checks.push({ name: 'database_at_rest', ok: true, detail: '尚未创建' });
@@ -93,6 +94,7 @@ function checkUserFiles(checks: DoctorCheck[], paths: AppPaths): void {
 export async function runDiagnostics(options: DiagnosticsOptions = {}): Promise<DoctorCheck[]> {
   const checks: DoctorCheck[] = [];
   const paths = options.paths ?? getAppPaths();
+  const platform = options.platform ?? process.platform;
 
   const major = Number.parseInt(process.versions.node.split('.')[0] ?? '0', 10);
   checks.push({ name: 'node', ok: major >= 22, detail: process.version });
@@ -146,11 +148,11 @@ export async function runDiagnostics(options: DiagnosticsOptions = {}): Promise<
       ok: Boolean(hit),
       detail: hit ? 'trigram 中文检索可用' : '中文检索无结果',
     });
-    const dbMode = statSync(dbPath).mode & 0o777;
+    const dbReport = inspectFilePermissions(dbPath, platform);
     checks.push({
       name: 'database_mode',
-      ok: (dbMode & 0o077) === 0,
-      detail: 'mode ' + formatMode(dbMode),
+      ok: !dbReport.tooOpen,
+      detail: dbReport.note ?? 'mode ' + formatMode(dbReport.mode),
     });
     db.close();
 
@@ -208,11 +210,11 @@ export async function runDiagnostics(options: DiagnosticsOptions = {}): Promise<
     saveAppConfig(configPath, createInitialConfig(new Date(), 'UTC'));
     const loaded = loadAppConfig(configPath);
     const text = readFileSync(configPath, 'utf8');
-    const mode = statSync(configPath).mode & 0o777;
+    const report = inspectFilePermissions(configPath, platform);
     checks.push({
       name: 'config',
-      ok: loaded?.version === 1 && !/api[_-]?key/i.test(text) && (mode & 0o077) === 0,
-      detail: 'TOML 可读写，不含密钥，mode ' + formatMode(mode),
+      ok: loaded?.version === 1 && !/api[_-]?key/i.test(text) && !report.tooOpen,
+      detail: 'TOML 可读写，不含密钥，' + (report.note ?? 'mode ' + formatMode(report.mode)),
     });
   } catch (error) {
     checks.push({ name: 'config', ok: false, detail: String(error) });
@@ -220,6 +222,6 @@ export async function runDiagnostics(options: DiagnosticsOptions = {}): Promise<
     rmSync(configDir, { recursive: true, force: true });
   }
 
-  checkUserFiles(checks, paths);
+  checkUserFiles(checks, paths, platform);
   return checks;
 }

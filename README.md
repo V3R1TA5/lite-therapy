@@ -11,7 +11,7 @@
 ## 现在能做什么
 
 - **首次设置向导**：知情同意 → 选择解锁方式（启动密码 + 12 词恢复短语、启动密码但跳过恢复短语、或本机自动解锁）→ 称呼 / 年龄提示 / 时区 → 模型配置与连接测试；支持 Esc 返回上一项。
-- **可选本机自动解锁**：跳过密码与恢复短语时，在配置目录写入 0600 密钥；启动时自动解锁。已有保险库可在设置里开启；开启时不改密码。关闭前必须设置新启动密码，避免随机密码模式锁死。数据仍加密，但拿到整个数据目录的人可以解密；改密/恢复后自动关闭。
+- **可选本机自动解锁**：跳过密码与恢复短语时，在 Unix 上写入 0600 密钥（Windows 依赖用户目录 ACL）；启动时自动解锁。已有保险库可在设置里开启；开启时不改密码。关闭前必须设置新启动密码，避免随机密码模式锁死。数据仍加密，但拿到整个数据目录的人可以解密；改密/恢复后自动关闭。
 - **真实会谈**：OpenAI-compatible / Ollama；模型设置含 DeepSeek 预设（`https://api.deepseek.com/v1` + `deepseek-flash`）；SSE 流式回复；停止生成；重试最后一条；PgUp / PgDn 滚动。
 - **会谈生命周期**：新建、继续当前会谈、继续上次会谈、结束、删除；空会谈自动清理；标题取首条用户消息前 24 个字符。
 - **可靠落库**：用户消息与助手回复写入加密 SQLite；流式过程中每 500ms 落一次草稿；崩溃或断电后，未完成的回复标记为中断。
@@ -29,7 +29,7 @@
 - **帮助与键位**：主页 `?` 或设置入口打开；列出主页/会谈/危机卡键位与安全边界。F1 受 Ink 输入解析限制未映射。
 - **主题**：设置页切换深色/浅色；`NO_COLOR` 下不输出 ANSI 颜色，只靠标签与缩进区分。
 - **真实光标**：聊天多行输入与单行输入用 Ink useCursor 定位终端光标，便于 IME 候选框跟随。
-- **导出**：Markdown / 单会谈结构化 JSON / 全部数据 JSON；导出前再次输入启动密码（自动解锁模式可留空）；文件 0600；全量包含档案、模型配置、会谈与消息、会后最新产物、来信、记忆与历史，不含 API Key。
+- **导出**：Markdown / 单会谈结构化 JSON / 全部数据 JSON；导出前再次输入启动密码（自动解锁模式可留空）；Unix 上文件 0600（Windows 依赖 ACL）；全量包含档案、模型配置、会谈与消息、会后最新产物、来信、记忆与历史，不含 API Key。
 - **单实例锁**：同一数据目录同时只允许一个 TUI 写入；崩溃留下的陈旧锁会按 PID 判定。
 - **Prompt 分层与快照**：冻结知微核心、共同价值、会谈场景、语言风格与模型契约；伦理与安全每轮实时注入；旧 M2 会谈会冻结为自己的 legacy 快照。
 - **安全检测**：中英文规则初筛（含否定 / 假设 / 影视 / 第三人称 / 过去时抑制）+ 模型复核（严格 JSON、12 秒超时、失败不回退明确危险）；跨轮升级；风险事件落库，不保存风险原文。
@@ -41,7 +41,7 @@
 - **预算设置与审计查看**：设置页可选择精简 / 保守 / 更长三档；最近上下文审计只显示消息 ID、角色、token、是否进入请求与警告，不显示正文。
 - **备份与恢复**：手动备份加密数据库、vault.json 与 config.toml；可浏览、输入备份密码并二次确认恢复；恢复前自动生成 pre-restore 安全备份。自动解锁模式需先设置启动密码才能创建备份。
 - **彻底删除**：警示 → 启动密码（自动解锁模式可留空）→ 输入“彻底删除”短语，删除数据库、vault、配置、日志与手动备份；明确提示 SSD 残留。
-- **验证**：39 个测试文件 / 204 个测试；CLI doctor；真实终端（PTY）+ 本地 fake 模型/分类器完成设置、会谈、危机卡与导出；另有 DeepSeek flash 短会谈、28 轮自然多轮会谈、默认 12k 自然摘要、6k 精简预算摘要、合成摘要、安全场景、备份恢复与 qwen3-embedding 真实回填/召回验收，见 docs/EVALUATION.md。
+- **验证**：40 个测试文件 / 210 个测试；CLI doctor；真实终端（PTY）+ 本地 fake 模型/分类器完成设置、会谈、危机卡与导出；另有 DeepSeek flash 短会谈、28 轮自然多轮会谈、默认 12k 自然摘要、6k 精简预算摘要、合成摘要、安全场景、备份恢复与 qwen3-embedding 真实回填/召回验收，见 docs/EVALUATION.md。
 
 ## 还不能做什么
 
@@ -54,28 +54,29 @@
 - **本地 embedding 推荐**：中文优先 `qwen3-embedding:0.6b`（已在 1024 维上做过真实回填/召回验收）或 `bge-m3`；多语言可用 `snowflake-arctic-embed2`；英文且要小体积可用 `nomic-embed-text`。安装后用服务地址 `http://127.0.0.1:11434/v1`，模型名填对应 tag。
 - IME 真实终端视觉验收未做；光标定位已接，但换行/极窄终端仍需实测。
 - 模型配置 UI 目前只有单档案；分任务模型映射仍未做。DeepSeek flash 已完成短会谈、危机卡 TUI、28 轮自然多轮会谈、默认 12k 自然摘要、合成 30 轮摘要、安全场景与备份/恢复/彻底删除副本演练；真实 embedding 只做了单模型小样本验收（应用内 1 查询/2 卡，另有 8 卡/6 查询抽查），否定/第三人称 concern 改为非阻断提示。
-- 仅 Linux 验证；macOS 的预编译与 CI 尚未补。
+- Linux 已有真实终端验收；Windows 已纳入 CI 构建，SQLCipher/doctor 已用 Windows Node 预验，终端与 IME 仍需真实机器验收；macOS 稍后。
 
 ## 环境
 
 - Node.js 22 或 24（当前在 Node 24 上验证）。
-- Linux 优先；macOS 后续补验证，Windows 暂不承诺。
-- 编译 SQLCipher 原生模块需要 Python 3、make、g++；多数平台会优先使用预编译包。
+- Linux 与 Windows 构建；macOS 稍后验收。
+- SQLCipher 原生包自带 Linux/Windows/macOS 预编译；`.npmrc` 跳过安装脚本，不需要现场 node-gyp 或 Python/VS。
+- Windows 不使用 Unix 0600/0700，详见“数据位置”。
 
 ## 快速开始
 
 ```bash
-npm install
+npm ci --include=dev
 npm run doctor
 npm run dev
 ```
 
 **npm run dev** 首次启动会进入设置向导。完成设置后进入主页；**Ctrl+Q** 在会谈中回到主页、在主页退出，**Ctrl+C** 也可退出，**Ctrl+L** 锁定。列表菜单支持 Vim 的 **j/k** 上下移动；进入会谈后禁用，避免影响输入。会谈中若卡片出现，Esc / Ctrl+C / Ctrl+Q 不会绕过它，请先选择一项安全动作。
 
-测试或便携使用可以指定独立目录，不会碰真实数据：
+默认数据目录按平台惯例（Linux 的 XDG、Windows 的 AppData），不会写进仓库。想用独立目录做测试：
 
 ```bash
-LITE_THERAPY_HOME="$PWD/.tmp/demo" npm run dev
+LITE_THERAPY_HOME=.tmp/demo npm run dev
 ```
 
 如果只想验证环境：
@@ -107,28 +108,47 @@ npm run doctor
 | npm run build | 构建 dist/cli.js |
 | npm run typecheck | TypeScript 检查 |
 | npm run lint | Biome 检查 |
-| npm test | Vitest（39 个文件 / 204 个测试） |
+| npm test | Vitest（40 个文件 / 210 个测试） |
 | npm run check | typecheck + lint + test |
 | npm run eval:safety | 本地安全规则评估，不调用模型 |
 | npm run eval:embedding | 本地 embedding 语义抽查，需要 Ollama 与指定模型 |
 | npm run check:licenses | 检查运行时依赖许可证 |
 | npm run check:secrets | 扫描仓库中的明显密钥 |
 | npm run release:check | 发布前一键检查 |
+| npm run release:build | 发布检查 + 打包到 release/（Windows/Linux） |
 | npm run spike:sqlcipher | 单独跑 SQLCipher + FTS5 验证 |
 | npm run spike:vault | 单独跑保险库验证 |
 
 真实模型验收、场景清单与发布检查见 [docs/EVALUATION.md](docs/EVALUATION.md)。
 
+## 构建
+
+Linux 或 Windows 的仓库根目录，一条命令生成发布产物：
+
+```bash
+npm ci --include=dev
+npm run release:build
+```
+
+`release:build` 会先跑完整 `release:check`，然后生成：
+
+- `release/lite-therapy-<version>.tgz`
+- `release/lite-therapy-<version>.tgz.sha256`
+- `release/build-info.json`
+
+tarball 是平台无关的 JS；原生 SQLCipher 由 npm 在安装时选择对应平台的预编译包。仓库内 `.npmrc` 设置 `ignore-scripts=true`，避免 node-gyp 触发 Windows 的 Python/VS 依赖。macOS 暂未纳入 CI。
+
 ## 数据位置
 
-Linux 默认：
+默认使用各平台惯例目录（由 env-paths 决定）：
 
-- 数据：`$XDG_DATA_HOME/lite-therapy`（默认 `~/.local/share/lite-therapy`），数据库 `counsel.db`、迁移备份、手动备份与 `exports/`。
-- 配置：`$XDG_CONFIG_HOME/lite-therapy`（默认 `~/.config/lite-therapy`），`vault.json`、`config.toml`、`secrets.enc`、可选的 `crisis-resources.json`。
-- 日志：`$XDG_STATE_HOME/lite-therapy/logs`。
-- `LITE_THERAPY_HOME` 可整体覆盖，便于测试与便携使用。
+- Linux：数据 `$XDG_DATA_HOME/lite-therapy`（默认 `~/.local/share/lite-therapy`）；配置 `$XDG_CONFIG_HOME/lite-therapy`（默认 `~/.config/lite-therapy`）；日志 `$XDG_STATE_HOME/lite-therapy`（默认 `~/.local/state/lite-therapy`）。
+- Windows：数据 `%LOCALAPPDATA%\lite-therapy\Data`；配置 `%APPDATA%\lite-therapy\Config`；日志 `%LOCALAPPDATA%\lite-therapy\Log`。
+- macOS 稍后验收；计划使用 `~/Library/Application Support/lite-therapy`、`~/Library/Preferences/lite-therapy`、`~/Library/Logs/lite-therapy`。
 
-数据库（含 WAL/SHM）、保险库、配置、密钥文件与导出文件权限均为 0600，目录为 0700。配置文件中不保存 API Key。
+`LITE_THERAPY_HOME` 可整体覆盖，指向一个包含 `data/`、`config/`、`log/` 的根目录；相对路径按当前工作目录解析，便于测试与便携使用。
+
+Unix 上数据库（含 WAL/SHM）、保险库、配置、密钥与导出文件为 0600，目录为 0700。Windows 上不使用 Unix mode，改为依赖用户目录 ACL；`doctor` 会显示 `Windows ACL`。自动解锁密钥在 Windows 上的额外保护弱于 Unix，建议设置启动密码。配置文件中不保存 API Key。
 
 ## 目录
 

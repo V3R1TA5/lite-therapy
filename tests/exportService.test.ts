@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -9,6 +9,7 @@ import {
   formatSessionJson,
   formatSessionMarkdown,
 } from '../src/services/exportService.js';
+import { expectPosixPrivateFile } from './helpers/permissions.js';
 
 const roots: string[] = [];
 
@@ -115,7 +116,7 @@ describe('exportService', () => {
 
     expect(filePath).toContain('session-session-');
     expect(filePath).toMatch(/\.md$/);
-    expect(statSync(filePath).mode & 0o777).toBe(0o600);
+    expectPosixPrivateFile(filePath);
     const content = readFileSync(filePath, 'utf8');
     expect(content).toContain('最近总是睡不好。');
 
@@ -128,7 +129,7 @@ describe('exportService', () => {
       now: new Date('2026-10-26T12:00:00.000Z'),
     });
     expect(jsonPath).toMatch(/\.json$/);
-    expect(statSync(jsonPath).mode & 0o777).toBe(0o600);
+    expectPosixPrivateFile(jsonPath);
     expect(JSON.parse(readFileSync(jsonPath, 'utf8'))).toHaveProperty('session.id', SESSION.id);
   });
 

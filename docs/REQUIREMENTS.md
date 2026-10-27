@@ -36,7 +36,7 @@
 |---|---|
 | 产品形态 | 本地单人 TUI |
 | 产品名 | Lite Therapy |
-| 目标平台 | Linux 优先 |
+| 目标平台 | Linux 与 Windows；macOS 稍后 |
 | 代码复用 | 干净实现，不复制 Open-Ling / VCP 代码 |
 | 界面语言 | v0.1 仅中文，预留 i18n |
 | 咨询取向 | 通用整合取向：人本为底，融合 CBT / 依恋 / 稳定化视角 |
@@ -359,11 +359,12 @@ user: 当前消息
 
 ### 8.1 数据位置
 
-- Linux：$XDG_DATA_HOME/lite-therapy 或 ~/.local/share/lite-therapy
-- macOS：~/Library/Application Support/lite-therapy
-- 配置：$XDG_CONFIG_HOME/lite-therapy 或 ~/.config/lite-therapy
-- 日志：$XDG_STATE_HOME/lite-therapy/logs 或 ~/.local/state/lite-therapy/logs
-- 允许 LIUBAI_HOME 覆盖，便于测试与便携使用。
+- Linux：数据 `$XDG_DATA_HOME/lite-therapy`（默认 `~/.local/share/lite-therapy`）；配置 `$XDG_CONFIG_HOME/lite-therapy`（默认 `~/.config/lite-therapy`）；日志 `$XDG_STATE_HOME/lite-therapy`（默认 `~/.local/state/lite-therapy`）。
+- Windows：数据 `%LOCALAPPDATA%\lite-therapy\Data`；配置 `%APPDATA%\lite-therapy\Config`；日志 `%LOCALAPPDATA%\lite-therapy\Log`。
+- macOS：稍后验收；计划使用 `~/Library/Application Support/lite-therapy`、`~/Library/Preferences/lite-therapy`、`~/Library/Logs/lite-therapy`。
+- `LITE_THERAPY_HOME` 可整体覆盖，指向包含 `data/`、`config/`、`log/` 的根目录；相对路径按当前工作目录解析，便于测试与便携使用。
+- Unix 上数据库、保险库、配置、密钥与导出为 0600，目录为 0700；Windows 不使用 Unix mode，依赖用户目录 ACL，`doctor` 显示 `Windows ACL`。自动解锁密钥在 Windows 上的额外保护弱于 Unix。
+- `.gitignore` 已忽略数据库、保险库、密钥与导出等常见文件；仍不得把真实数据提交到仓库。
 - 数据库：counsel.db（SQLCipher 加密）
 - 保险库：vault.json（只存盐、KDF 参数、被包裹的数据库密钥，不含明文密钥）
 - 配置：config.toml（不含 API Key）
@@ -376,7 +377,7 @@ user: 当前消息
 - 恢复短语：12 词 BIP39（128 bit），单独派生包裹密钥；与密码包裹的是同一把数据库密钥。
 - 首次设置：展示恢复短语一次，要求随机抄写 3 个词确认；明确「忘记密码且丢失短语 = 数据不可恢复」。
 - 可选恢复短语：密码模式下可以跳过展示/确认；跳过时仍用密码加密，但忘记密码没有恢复入口。
-- 可选本机自动解锁：生成随机密钥写入 config/auto-unlock.key（0600），启动时自动解锁；已有保险库可在设置中开启（写入当前密码），关闭前必须设置新密码。拿到整个数据目录可解密；自动模式跳过恢复短语展示，密钥丢失不可恢复。
+- 可选本机自动解锁：生成随机密钥写入 config/auto-unlock.key（Unix 上 0600；Windows 依赖 ACL），启动时自动解锁；已有保险库可在设置中开启（写入当前密码），关闭前必须设置新密码。拿到整个数据目录可解密；自动模式跳过恢复短语展示，密钥丢失不可恢复。
 - 修改密码：验证旧密码或自动解锁密钥 → 重新包裹；恢复短语保持不变；修改成功后移除自动解锁密钥。
 - 用恢复短语恢复：解包 → 设置新密码 → 重新包裹；成功后移除自动解锁密钥。
 - 自动解锁模式创建备份前必须先设置启动密码，避免生成无法恢复的备份。
@@ -387,9 +388,10 @@ user: 当前消息
 ### 8.3 SQLCipher
 
 - 使用 SQLCipher 兼容的 better-sqlite3 分支；M0 做技术 spike，验证：
-  - Node 22/24 + Linux 预编译或本地编译
+  - Node 22/24 + Linux/Windows 预编译；macOS 稍后
   - FTS5 可用
   - PRAGMA key / cipher_memory_security / secure_delete 行为
+- 仓库 `.npmrc` 设置 `ignore-scripts=true`；SQLCipher 使用预编译，避免 Windows 现场 node-gyp 需要 Python/VS。
 - PRAGMA：key、foreign_keys=ON、journal_mode=WAL、synchronous=NORMAL、temp_store=MEMORY、secure_delete=ON。
 - WAL 与临时文件同样由 SQLCipher 加密；仍需在文档说明备份与磁盘残留的边界。
 - 迁移前自动做加密备份；迁移事务失败则回滚并保留备份。
@@ -821,7 +823,7 @@ memory_cards_fts(text, tags, memory_id)              -- FTS5
 - 集成：真实 SQLite 迁移幂等、会谈状态机、fake provider 流式、结束→任务→备忘录→新会谈冻结、退出重启续跑、继续会谈失效。
 - TUI：ink-testing-library 覆盖首次启动、发送 / 停止、结束确认、锁定、危机卡、记忆编辑。
 - 静态：typecheck、Biome、dependency-cruiser、license / secret scan。
-- CI：Node 22 与 24，Linux + macOS；不调用真实模型。
+- CI：Node 22 与 24，Linux + Windows；macOS 稍后；不调用真实模型。`npm run release:build` 在两个平台生成 tarball 与 SHA256。
 
 ### 14.2 咨询质量评估（离线，人工复核）
 
@@ -900,7 +902,7 @@ memory_cards_fts(text, tags, memory_id)              -- FTS5
 **本轮已定**
 
 - 产品名：Lite Therapy；仓库名：lite-therapy。
-- 目标平台：Linux 优先；macOS 在 M6 前后补验证，Windows 暂不承诺。
+- 目标平台：Linux 与 Windows；macOS 稍后。
 - 代码复用：干净实现；不复制 Open-Ling 或 VCP 的代码，只在 NOTICE 中致谢设计启发。
 - 界面语言：v0.1 仅中文，字符串集中管理，为英文预留 i18n。
 - 开工：从 M0 开始，先做 SQLCipher 与 Ink 输入两个 spike。

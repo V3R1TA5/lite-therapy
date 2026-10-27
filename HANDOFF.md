@@ -32,16 +32,10 @@ npm run doctor
 
 ## 1. 目录改名（如果还没做）
 
-先确认目标不存在：
+在项目根目录执行 `pwd`。如果仍在旧目录（Agent_Psycho），到父目录改名：
 
 ~~~bash
-ls -d /home/sishen/Projects/lite-therapy 2>/dev/null
-~~~
-
-然后移动：
-
-~~~bash
-cd /home/sishen/Projects
+cd ..
 mv Agent_Psycho lite-therapy
 cd lite-therapy
 ~~~
@@ -67,7 +61,7 @@ cd lite-therapy
 - 安全：规则初筛 + 模型复核 + 跨轮升级 + risk_events；危机卡动作与本地资源；不内置号码。
 - 上下文：历史 24k / 摘要触发 12k / 单条 16k token；设置页三档可调；摘要增量更新；审计只记 ID、token 与警告。
 - 会后：005 队列；结束会谈进入进度页自动运行六类任务；5s/20s/60s 退避；备忘录五段结构校验；继续会谈失效；备忘录带入；来信信箱；内部记录只读。
-- 39 个测试文件 / 204 个测试、构建、真实 PTY + 本地 fake 模型/分类器冒烟。
+- 40 个测试文件 / 210 个测试、构建、真实 PTY + 本地 fake 模型/分类器冒烟。
 - 规格、进度、来源说明、NOTICE、Apache-2.0、CI。
 
 ### 边界与仍未做
@@ -77,7 +71,7 @@ cd lite-therapy
 - **多模型档案 UI / 分任务模型覆盖** 未做；主会谈、安全复核、摘要、embedding 的配置仍以单 active profile 为中心。
 - **自动解锁**：密钥文件与加密数据库同目录，拿到整个目录可解密；自动模式跳过恢复短语，密钥丢失不可恢复；备份强制先设置密码。
 - **跳过恢复短语**：密码模式可选择不展示/不确认恢复短语；忘记密码后没有恢复入口。
-- **平台**：仅 Linux 验证；macOS / Windows 未验证。
+- **平台**：Linux 已做真实终端验收；Windows 已纳入 CI 构建，SQLCipher/doctor 已在 Windows Node 下预验，真实终端与 IME 仍待机器验收；macOS 稍后。
 - **安全**：规则 + 模型复核 + 危机卡已接，但检测是概率性的；真实短会谈、长摘要与混合句验收不能推出“安全”。
 
 这些属于 M3–M7。完整范围见 **docs/REQUIREMENTS.md** 第 4 节与第 16 节。
@@ -91,14 +85,16 @@ npm run doctor
 npm run typecheck
 npm test
 npm run build
+npm run release:build
 ~~~
 
 期望：
 
 - doctor 全部 PASS，包括 migrations（001_init + 002_sessions + 003_safety + 004_context_audit_entries + 005_post_session + 006_memory + 007_session_memory_switch + 008_memory_history）、sqlcipher、fts5、reopen、wrong_key、vault、secrets、config、setup 与文件权限。
 - typecheck 无输出。
-- test 显示 39 个测试文件、204 个测试全部通过。
+- test 显示 40 个测试文件、210 个测试全部通过。
 - build 产出 dist/cli.js，无报错。
+- release:build 产出 `release/lite-therapy-<version>.tgz` 与 `.sha256`；Linux/Windows 共用同一脚本。
 
 想手动看界面：
 
@@ -111,7 +107,7 @@ npm run dev
 想从干净目录完整走一遍，不会碰真实数据：
 
 ~~~bash
-LITE_THERAPY_HOME="$PWD/.tmp/demo" npm run dev
+LITE_THERAPY_HOME=.tmp/demo npm run dev
 ~~~
 
 如果依赖缺失（例如 node_modules 被删）：
@@ -119,6 +115,8 @@ LITE_THERAPY_HOME="$PWD/.tmp/demo" npm run dev
 ~~~bash
 NODE_ENV=development npm install --include=dev
 ~~~
+
+`.npmrc` 设置 `ignore-scripts=true`：SQLCipher 走预编译，不触发 node-gyp；`npm run build` 与测试已在 Linux 验证。
 
 当前 shell 可能全局设置了 NODE_ENV=production，直接 npm install 会裁掉 devDependencies。
 
@@ -219,7 +217,7 @@ NODE_ENV=development npm install --include=dev
 - prompts（4）、safetyRules（14）、riskClassifier（3）、safetyService（7）、crisisResources（4）、contextService（7）、postSessionService（5）、memoryService（9）、theme（2）
 - setupPolicy（4）、lockout（1）、connectionTest（5）、doctor（1）
 - app TUI（10）、diagnostics TUI（1）、chatScreen TUI（10）、crisisCard TUI（2）、homeContext TUI（13）、modelSetup TUI（1）、letters TUI（1）、memories TUI（5）、postSession TUI（3）、sessionList TUI（1）、multiline-input（5）
-- 合计 39 个文件 / 204 个测试。
+- 合计 40 个文件 / 210 个测试。
 
 ### 文档与工程
 
@@ -239,7 +237,7 @@ NODE_ENV=development npm install --include=dev
 |---|---|
 | 产品名 | Lite Therapy |
 | 仓库标识 | lite-therapy |
-| 形态 | 本地单人 TUI，Linux 优先 |
+| 形态 | 本地单人 TUI，Linux 与 Windows；macOS 稍后 |
 | 技术栈 | TypeScript + Ink 8 + React 19 |
 | 咨询取向 | 通用整合；人本为底，融合 CBT / 依恋 / 稳定化 |
 | 人设 | 知微，温和克制 |
@@ -278,7 +276,7 @@ lite-therapy/
 │  │  ├─ MultilineInput.tsx    多行输入
 │  │  └─ runTui.tsx            Ink 入口与单实例锁
 │  └─ types/                   SQLCipher 类型 shim
-├─ tests/                      Vitest（39 个文件 / 204 个测试）
+├─ tests/                      Vitest（40 个文件 / 210 个测试）
 ├─ spikes/                     独立验证
 ├─ docs/
 │  ├─ REQUIREMENTS.md          v0.1 规格
@@ -296,11 +294,11 @@ lite-therapy/
 ## 7. 环境坑（当前机器）
 
 1. **NODE_ENV=production**：当前 shell 有这个变量，npm install 会裁掉 devDependencies。安装时显式加 --include=dev，或先设 NODE_ENV=development。
-2. **npm 缓存只读**：家目录下的 ~/.npm 在沙箱里可能不可写。需要安装时：
+2. **npm 缓存只读**：家目录下的 npm 缓存在沙箱里可能不可写。需要安装时：
 
    ~~~bash
-   export npm_config_cache="$PWD/.npm-cache"
-   export XDG_CACHE_HOME="$PWD/.cache"
+   export npm_config_cache=.npm-cache
+   export XDG_CACHE_HOME=.cache
    ~~~
 
 3. **Vitest 缓存**：vitest.config.ts 已把 XDG_DATA_HOME、Vite cacheDir、fsModuleCachePath 指到项目内 .tmp，避免写家目录。
@@ -309,7 +307,7 @@ lite-therapy/
 6. **cipher_version 返回 unknown**：SQLite3MC 不实现该 PRAGMA；getCipherVersion 会回退到 PRAGMA cipher，返回 sqlcipher。doctor 显示 sqlcipher 是正常的。
 7. **Biome**：仍会有 useTemplate 等 info 级提示，退出码 0；不是错误。格式与 import 排序可以 `npx biome check --write src tests spikes` 自动处理。
 8. **Ink 测试**：Ink 8 + ink-testing-library 4 可用；不要降级到旧版本。
-9. **数据目录**：沙箱里家目录可能不可写；跑 doctor 时可用 LITE_THERAPY_HOME="$PWD/.tmp/app" 覆盖。
+9. **数据目录**：按平台惯例（Linux XDG、Windows AppData）；需要隔离时用 `LITE_THERAPY_HOME=.tmp/app` 覆盖。Windows 不使用 Unix 0600/0700，doctor 显示 `Windows ACL`。
 
 ---
 
@@ -320,7 +318,7 @@ lite-therapy/
 - **M5**：记忆提取/召回/记忆库/开关/历史版本/召回评分完成；qwen3-embedding:0.6b 完成 1024 维真实回填与单组召回，另有 8 卡/6 查询抽查（top1 5/6）；模型/端点变化清空旧向量并提示回填。
 - **M6**：备份/恢复/彻底删除、JSON 导出、命令面板、主题/NO_COLOR、真实光标完成；2026-10-27 复跑 80×24 浅色/NO_COLOR、40×20 窄屏保护与光标序列通过；IME 候选框与真实换行视觉复核仍未做。
 - **M7**：`docs/EVALUATION.md`、`eval:safety` 12/12、`eval:embedding`、许可证/密钥/发布检查、`release:check` 已做。
-- **仍待做**：真实中文 IME 候选框、UI 视觉复核、macOS/Windows、最终发布与推送。安全检测仍是概率性的，不能对外说“安全”。
+- **仍待做**：真实中文 IME 候选框、UI 视觉复核、Windows 真实终端与权限验收、macOS、最终发布与推送。安全检测仍是概率性的，不能对外说“安全”。
 
 ---
 
@@ -344,7 +342,7 @@ lite-therapy/
 - **M3 边界**：安全层、上下文预算与摘要已落地，但检测是概率性的，会有漏报 / 误报；危机卡不是保证，摘要也可能丢细节。不要描述成“可以安全用于危机”，也不要声称 AI 能联系急救。
 - **IME 光标**：已用 Ink useCursor + measureElement 定位；换行/极窄终端坐标仍需真实终端验收。
 - **F1 帮助**：Ink 对 F1 序列给出空 input/无 f1 字段；当前用 `?` 与设置入口，不要强行劫持原始 stdin。
-- **平台**：只验证了 Linux；macOS 的 SQLCipher 预编译与 CI 未补；Windows 未承诺。
+- **平台**：Linux 已验收；Windows 已接入 CI 构建与测试，SQLCipher/doctor 已在 Windows Node 下预验，但真实终端、IME 与 ACL 隔离仍需机器验收；macOS 未纳入 CI。
 - **安全检测**：规则 + 模型复核 + 危机卡已实现；规则会误报 / 漏报，分类模型可能超时或误判，卡片可用 `我现在安全` 关闭。锁定 / 自动锁定仍可暂时离开卡片，解锁后只保留风险标记。不要把这些当成完整安全保证。
 - **分类模型数据外发**：安全复核使用同一个模型配置，会把当前表达与最近用户表达的必要片段发给服务商；这是复核的代价，隐私说明必须写清楚。
 - **摘要数据外发**：滚动摘要会把被裁剪的较早原文发给同一服务商；摘要可能丢细节或写错，只作为工作假设。

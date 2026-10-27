@@ -1,4 +1,4 @@
-import { chmodSync, mkdtempSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -10,6 +10,7 @@ import {
   saveVaultFile,
   vaultExists,
 } from '../src/security/vaultStore.js';
+import { expectPosixPrivateFile, isWindows } from './helpers/permissions.js';
 
 const TEST_KDF = { N: 1024, r: 8, p: 1, dkLen: 32 } as const;
 const PASSPHRASE = 'test passphrase 123';
@@ -28,14 +29,20 @@ afterEach(() => {
 });
 
 describe('vaultStore', () => {
-  it('writes the vault with 0600 permissions and reads it back', async () => {
+  it('writes the vault with private permissions and reads it back', async () => {
     const file = join(tempDir(), 'vault.json');
     const created = await createVault(PASSPHRASE, { kdf: TEST_KDF });
     saveVaultFile(file, created.vault);
 
     expect(vaultExists(file)).toBe(true);
-    expect(statSync(file).mode & 0o777).toBe(0o600);
-    expect(inspectFilePermissions(file)).toEqual({ mode: 0o600, tooOpen: false });
+    expectPosixPrivateFile(file);
+    const report = inspectFilePermissions(file);
+    if (isWindows) {
+      expect(report.tooOpen).toBe(false);
+      expect(report.note).toContain('Windows');
+    } else {
+      expect(report).toEqual({ mode: 0o600, tooOpen: false });
+    }
     expect(formatMode(0o600)).toBe('600');
 
     const loaded = loadVaultFile(file);
@@ -43,13 +50,23 @@ describe('vaultStore', () => {
     expect(key.equals(created.dbKey)).toBe(true);
   });
 
-  it('reports overly open permissions without silently fixing them', async () => {
+  const itPosix = isWindows ? it.skip : it;
+  itPosix('reports overly open permissions without silently fixing them', async () => {
     const file = join(tempDir(), 'vault.json');
     const created = await createVault(PASSPHRASE, { kdf: TEST_KDF });
     saveVaultFile(file, created.vault);
     chmodSync(file, 0o644);
 
     expect(inspectFilePermissions(file)).toEqual({ mode: 0o644, tooOpen: true });
+  });
+
+  it('reports Windows ACL semantics without Unix mode checks', async () => {
+    const file = join(tempDir(), 'vault.json');
+    const created = await createVault(PASSPHRASE, { kdf: TEST_KDF });
+    saveVaultFile(file, created.vault);
+    const report = inspectFilePermissions(file, 'win32');
+    expect(report.tooOpen).toBe(false);
+    expect(report.note).toContain('Windows');
   });
 
   it('distinguishes a missing vault from a corrupt one', () => {

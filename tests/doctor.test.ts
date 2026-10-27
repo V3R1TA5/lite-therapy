@@ -27,5 +27,12 @@ describe('runDiagnostics', () => {
     expect(checks.map((check) => check.name)).toContain('migrations');
     expect(checks.map((check) => check.name)).toContain('secrets');
     expect(checks.find((check) => check.name === 'setup')?.detail).toContain('未初始化');
+
+    const windowsChecks = await runDiagnostics({ paths: makePaths(), platform: 'win32' });
+    expect(windowsChecks.filter((check) => !check.ok)).toEqual([]);
+    expect(windowsChecks.find((check) => check.name === 'database_mode')?.detail).toContain(
+      'Windows ACL',
+    );
+    expect(windowsChecks.find((check) => check.name === 'config')?.detail).toContain('Windows ACL');
   });
 });

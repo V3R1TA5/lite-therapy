@@ -52,6 +52,11 @@ export function openEncryptedDatabase(path: string, key: Buffer): DatabaseConnec
  * 仍把主库与 WAL/SHM 一起收紧到 0600，减少目录权限被改动时的暴露面。
  */
 function secureDatabaseFiles(path: string): void {
+  // Windows 上 chmod 不能表达 0600，且对打开中的 WAL/SHM 可能抛 EPERM；
+  // 实际隔离依赖用户目录 ACL，这里直接交给文件系统。
+  if (process.platform === 'win32') {
+    return;
+  }
   for (const suffix of ['', '-wal', '-shm']) {
     try {
       chmodSync(path + suffix, 0o600);

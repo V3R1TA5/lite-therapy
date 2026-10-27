@@ -24,12 +24,13 @@ npm test
 npm run build
 npm run check
 npm run release:check
+npm run release:build
 npm run dev
 npm run eval:safety
 npm run eval:embedding
 ~~~
 
-当前 shell 可能全局设置 NODE_ENV=production。安装依赖时用：
+仓库 `.npmrc` 设置 `ignore-scripts=true`，SQLCipher 走预编译，避免 Windows 现场 node-gyp。当前 shell 可能全局设置 NODE_ENV=production。安装依赖时用：
 
 ~~~bash
 NODE_ENV=development npm install --include=dev
@@ -38,8 +39,8 @@ NODE_ENV=development npm install --include=dev
 如果家目录的 npm 缓存不可写：
 
 ~~~bash
-export npm_config_cache="$PWD/.npm-cache"
-export XDG_CACHE_HOME="$PWD/.cache"
+export npm_config_cache=.npm-cache
+export XDG_CACHE_HOME=.cache
 ~~~
 
 ## 工作方式
@@ -89,11 +90,12 @@ export XDG_CACHE_HOME="$PWD/.cache"
 - master 上已有本地提交；不要删除 .git，不要改写历史，未经同意不要推送或强制改写。
 - 不提交密钥、真实会谈数据、数据库、导出文件、node_modules、dist。
 - 不在未经用户同意时推送 remote 或改写分支。
-- 用户移动目录后，路径会变成 /home/sishen/Projects/lite-therapy；不要假设仍是 Agent_Psycho。
+- 项目目录可能被移动；以 `pwd` 或 `git rev-parse --show-toplevel` 为准，不要假设固定的绝对路径。
 
 ## 已知坑
 
 - Vitest 5 会写 XDG_DATA_HOME 与缓存；vitest.config.ts 已指到项目内 .tmp。
+- 默认数据目录走平台惯例（env-paths：Linux XDG、Windows AppData）；`LITE_THERAPY_HOME` 仅作便携/测试覆盖。数据库、保险库、配置、密钥、日志与导出都不要提交。
 - SQLCipher 包的 exports 缺 types；用 src/types 的 shim，不要用 tsconfig paths 指 .d.ts。
 - getCipherVersion 会回退到 PRAGMA cipher，返回 sqlcipher 是正常的。
 - Ink 8 输入已用 useCursor + measureElement 定位真实光标；换行/窄终端坐标仍需真实终端验收。
@@ -118,7 +120,7 @@ export XDG_CACHE_HOME="$PWD/.cache"
 - 彻底删除在 AppService.wipeAllData：校验密码与路径后删除 data/config/log；不要把它改成可绕过密码的操作。
 - 自动解锁模式在 config/auto-unlock.key 存随机密钥（0600），启动自动解锁、锁定屏 Ctrl+A；设置页可对已有保险库开启。开启时不改密码，只写当前密码（v1 base64）；关闭前必须设新密码，否则随机密码模式会锁死。拿到整个目录可解密。改密/恢复/恢复备份后必须移除；自动模式创建备份必须先设置密码。
 - 密码模式可以跳过恢复短语（不展示/不确认），代价是忘记密码无法恢复；不要把它描述成还能用短语恢复。
-- 仅 Linux 验证；macOS / Windows 未验证。
+- Linux 已做真实终端验收；Windows 已纳入 CI 构建与测试，但真实终端与 ACL 语义仍需机器验收；macOS 稍后。Windows 不使用 Unix 0600/0700，测试里用 `tests/helpers/permissions.ts` 跳过 POSIX mode 断言；打开 SQLCipher 时不要对 WAL/SHM chmod（Windows 会 EPERM，`database.ts` 已跳过）。
 - 本地安全评估用 npm run eval:safety；它只测规则，不代表安全，也不调用真实模型。
 - DeepSeek flash 短会谈验收发现推理 token 会吃满预算：memo/memory 的 maxTokens 已提到 3000，安全分类器提到 1000、默认超时 12s；修改这些预算要有真实模型回归。`.env` 只用于本机验收，已被 gitignore，权限 0600，不要把 Key 写进代码/日志。
 

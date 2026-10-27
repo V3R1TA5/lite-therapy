@@ -56,6 +56,17 @@ describe('safety rules', () => {
     expect(spouse.matches.some((match) => match.context === 'third_party')).toBe(true);
   });
 
+  it('keeps first-person continuation after a third-party risk without repeating the word', () => {
+    const mixed = scanRiskText('朋友说他想自杀，我也有过');
+    expect(mixed.level).toBe('concern');
+    expect(mixed.matches.some((match) => match.context === 'self')).toBe(true);
+
+    expect(scanRiskText('朋友说他想自杀，我也想过').level).toBe('concern');
+    expect(scanRiskText('朋友说他想自杀，我也有过很多疑问').level).toBe('none');
+    expect(scanRiskText('朋友说他想自杀，我也想过怎么帮他').level).toBe('none');
+    expect(scanRiskText('朋友说他想自杀，我也一样担心他').level).toBe('none');
+  });
+
   it('recognizes a parent subject even after a comma', () => {
     const result = scanRiskText('我妈，最近总说想死');
     expect(result.level).toBe('none');

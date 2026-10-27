@@ -31,6 +31,37 @@ describe('safety rules', () => {
     expect(result.level).toBe('concern');
   });
 
+  it('keeps a later self statement after a third-party clause', () => {
+    const mixed = scanRiskText('朋友说他想自杀，其实我也想过自杀');
+    expect(mixed.level).toBe('concern');
+    expect(mixed.matches.some((match) => match.context === 'third_party')).toBe(true);
+    expect(mixed.matches.some((match) => match.context === 'self')).toBe(true);
+  });
+
+  it('keeps a later self statement after a negated clause', () => {
+    const mixed = scanRiskText('我没有想自杀，但后来还是自杀了');
+    expect(mixed.level).toBe('concern');
+    expect(mixed.matches.some((match) => match.context === 'self')).toBe(true);
+  });
+
+  it('does not treat a third party after "我" as the user', () => {
+    const friend = scanRiskText('朋友说他想自杀，我觉得他可能也想自杀');
+    expect(friend.level).toBe('none');
+    expect(
+      friend.matches.filter((match) => match.context === 'third_party').length,
+    ).toBeGreaterThanOrEqual(2);
+
+    const spouse = scanRiskText('朋友说他想自杀，我先生也说过想死');
+    expect(spouse.level).toBe('none');
+    expect(spouse.matches.some((match) => match.context === 'third_party')).toBe(true);
+  });
+
+  it('recognizes a parent subject even after a comma', () => {
+    const result = scanRiskText('我妈，最近总说想死');
+    expect(result.level).toBe('none');
+    expect(result.matches.some((match) => match.context === 'third_party')).toBe(true);
+  });
+
   it('suppresses third-party and fiction contexts but keeps them for review', () => {
     const thirdParty = scanRiskText('我朋友说他想自杀');
     expect(thirdParty.level).toBe('none');

@@ -91,9 +91,9 @@ const AMBIGUOUS_PATTERN =
 
 const PRESENT_MARKERS = /(?:现在|最近|今天|这周|这个月|又|还是|正在|马上|今晚)/i;
 const THIRD_PARTY_PATTERN =
-  /(?:朋友|同学|同事|家人|妈妈|爸爸|母亲|父亲|孩子|儿子|女儿|别人|有人|患者|来访者|新闻|他|她|他们|她们|friend|someone|client|my\s+(?:friend|partner|mother|father|son|daughter))/i;
+  /(?:朋友|同学|同事|家人|妈|爸|母亲|父亲|孩子|儿子|女儿|别人|有人|患者|来访者|新闻|奶奶|爷爷|外婆|外公|姥姥|姥爷|哥哥|姐姐|弟弟|妹妹|先生|太太|老公|老婆|男友|女友|对象|领导|老师|医生|咨询师|他|她|他们|她们|friend|someone|client|my\s+(?:friend|partner|mother|father|son|daughter))/i;
 const THIRD_PARTY_FRAME =
-  /(?:朋友|同学|同事|家人|妈妈|爸爸|母亲|父亲|孩子|儿子|女儿|别人|有人|患者|来访者|他|她|他们|她们|friend|someone|client).{0,20}(?:说|告诉|提到|想|要|准备|曾经|最近|有|said|wants|is|was|has)/i;
+  /(?:朋友|同学|同事|家人|妈|爸|母亲|父亲|孩子|儿子|女儿|别人|有人|患者|来访者|奶奶|爷爷|外婆|外公|姥姥|姥爷|哥哥|姐姐|弟弟|妹妹|先生|太太|老公|老婆|男友|女友|对象|领导|老师|医生|咨询师|他|她|他们|她们|friend|someone|client).{0,20}(?:说|告诉|提到|想|要|准备|曾经|最近|有|said|wants|is|was|has)/i;
 const FICTION_PATTERN =
   /(?:电影|电视剧|小说|游戏|故事|剧情|角色|动漫|fiction|movie|novel|game|book|character)/i;
 const HISTORICAL_PATTERN = /(?:以前|曾经|过去|小时候|去年|那次|当时|used\s+to|in\s+the\s+past)/i;
@@ -107,10 +107,35 @@ function evidenceFor(text: string, index: number, length: number): string {
   return text.slice(start, end).replace(/\s+/g, ' ').trim().slice(0, 120);
 }
 
+function clauseStart(text: string, index: number): number {
+  let start = 0;
+  for (let cursor = index - 1; cursor >= 0; cursor -= 1) {
+    if (/[。！？!?；;\n]/.test(text[cursor] ?? '')) {
+      start = cursor + 1;
+      break;
+    }
+  }
+  const comma = Math.max(text.lastIndexOf('，', index - 1), text.lastIndexOf(',', index - 1));
+  if (comma >= start) {
+    const tail = text.slice(comma + 1, index);
+    // 只把最后一个“我/自己/咱”视为主语切换；若其后又出现第三人称，仍按第三人称处理。
+    const selfMatches = [...tail.matchAll(/(?:我|自己|咱)/g)];
+    const lastSelf = selfMatches[selfMatches.length - 1];
+    if (lastSelf !== undefined && lastSelf.index !== undefined) {
+      const rest = tail.slice(lastSelf.index + lastSelf[0].length);
+      if (!THIRD_PARTY_PATTERN.test(rest)) {
+        start = comma + 1;
+      }
+    }
+  }
+  return start;
+}
+
 function detectContext(text: string, index: number, length: number): RiskContext {
+  const start = clauseStart(text, index);
   const end = Math.min(text.length, index + length + 24);
-  const before = text.slice(Math.max(0, index - 48), index);
-  const around = text.slice(Math.max(0, index - 48), end);
+  const before = text.slice(Math.max(start, index - 48), index);
+  const around = text.slice(Math.max(start, index - 48), end);
   const after = text.slice(index + length, Math.min(text.length, index + length + 24));
 
   if (FICTION_PATTERN.test(around)) {
@@ -152,23 +177,31 @@ export function scanRiskText(text: string): RuleScanResult {
   let level: RiskLevel = 'none';
 
   for (const rule of RULES) {
-    const match = rule.pattern.exec(text);
-    if (match === null || match.index === undefined) {
-      continue;
-    }
-    const context = detectContext(text, match.index, match[0].length);
-    const adjusted = levelAfterContext(rule.level, context);
-    const result: RuleMatch = {
-      ruleId: rule.id,
-      category: rule.category,
-      level: adjusted.level,
-      evidence: evidenceFor(text, match.index, match[0].length),
-      context,
-      suppressed: adjusted.suppressed,
-    };
-    matches.push(result);
-    if (!adjusted.suppressed) {
-      level = maxRiskLevel(level, adjusted.level);
+    // 同一句里可能先提第三人、再讲自己；只看第一个命中会把后半句一起压掉。
+    const pattern = new RegExp(
+      rule.pattern.source,
+      rule.pattern.flags.includes('g') ? rule.pattern.flags : `${rule.pattern.flags}g`,
+    );
+    let match = pattern.exec(text);
+    while (match !== null) {
+      const context = detectContext(text, match.index, match[0].length);
+      const adjusted = levelAfterContext(rule.level, context);
+      const result: RuleMatch = {
+        ruleId: rule.id,
+        category: rule.category,
+        level: adjusted.level,
+        evidence: evidenceFor(text, match.index, match[0].length),
+        context,
+        suppressed: adjusted.suppressed,
+      };
+      matches.push(result);
+      if (!adjusted.suppressed) {
+        level = maxRiskLevel(level, adjusted.level);
+      }
+      if (match[0].length === 0) {
+        pattern.lastIndex += 1;
+      }
+      match = pattern.exec(text);
     }
   }
 

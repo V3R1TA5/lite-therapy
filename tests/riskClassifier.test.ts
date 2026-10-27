@@ -40,7 +40,8 @@ describe('ModelRiskClassifier', () => {
     const request = provider.requests[0];
     expect(request?.messages[0]?.content).toContain('只输出一个 JSON 对象');
     expect(request?.messages[0]?.content).toContain('不要 Markdown');
-    expect(request?.maxTokens).toBe(300);
+    expect(request?.maxTokens).toBe(1000);
+    expect(request?.timeoutMs).toBe(12000);
     expect(request?.temperature).toBe(0);
     expect(request?.messages[1]?.content).toContain('最近很累');
     expect(request?.messages[1]?.content).toContain('我有时候真的不想活了');

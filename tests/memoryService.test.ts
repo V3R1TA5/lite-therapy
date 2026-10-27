@@ -270,6 +270,48 @@ describe('MemoryService', () => {
     expect(listMemoryRecalls(harness.db, harness.sessionId)[0]?.reason).toBe('fts5+coverage');
   });
 
+  it('does not request a query embedding before any card has been backfilled', async () => {
+    const harness = await setup();
+    insertMemoryCard(harness.db, {
+      id: 'plain-card',
+      kind: 'theme',
+      text: '工作压力反复出现',
+      textHash: memoryTextHash('工作压力反复出现'),
+      sourceSessionId: harness.sessionId,
+      sourceMessageIds: [harness.userId],
+      confidence: 0.8,
+      sensitivity: 'normal',
+      tags: [],
+      uncertain: false,
+      model: PROFILE.model,
+      promptVersion: 'v1',
+      createdAt: '2026-10-26T12:00:00.000Z',
+    });
+    let embedCalls = 0;
+    const provider = {
+      async *stream() {
+        yield { type: 'done' as const };
+      },
+      async embed() {
+        embedCalls += 1;
+        return [[1, 0]];
+      },
+    };
+    const service = new MemoryService({
+      db: harness.db,
+      provider,
+      profile: PROFILE,
+      embeddingModel: 'embed-test',
+      now: () => new Date('2026-10-26T12:00:00.000Z'),
+      timeoutMs: 1000,
+    });
+
+    const recalled = await service.recall(harness.sessionId, '工作压力', harness.userId);
+    expect(recalled).toHaveLength(1);
+    expect(embedCalls).toBe(0);
+    expect(listMemoryRecalls(harness.db, harness.sessionId)[0]?.reason).toBe('fts5+coverage');
+  });
+
   it('uses provider embeddings to recall cards without lexical overlap', async () => {
     const harness = await setup();
     const provider = {

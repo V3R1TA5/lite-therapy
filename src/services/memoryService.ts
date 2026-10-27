@@ -210,7 +210,11 @@ export class MemoryService {
         : this.embeddingApiKey === null
           ? undefined
           : this.embeddingApiKey;
-    return await runtime.provider.embed!({
+    const embed = runtime.provider.embed;
+    if (embed === undefined) {
+      throw new Error('没有配置向量模型。');
+    }
+    return await embed({
       profile: runtime.profile,
       model: this.embeddingModel,
       input,
@@ -370,8 +374,13 @@ export class MemoryService {
     const rankById = new Map(candidates.map((card, index) => [card.id, index]));
     let queryVector: number[] | null = null;
     let usedEmbedding = false;
+    const runtime = this.embeddingRuntime();
+    const activeCards =
+      runtime === null ? [] : listMemoryCards(this.db, { status: 'active', limit: 200 });
+    const hasEmbeddedCards = activeCards.some((card) => allowed(card) && card.embedding !== null);
 
-    if (this.embeddingRuntime() !== null) {
+    // 还没回填任何卡片时不要发查询向量请求：既省一次调用，也避免把召回标成 embedding。
+    if (runtime !== null && hasEmbeddedCards) {
       try {
         const vectors = await this.embedTexts([query.slice(-6000)]);
         queryVector = vectors[0] ?? null;
@@ -384,7 +393,7 @@ export class MemoryService {
     if (queryVector !== null) {
       usedEmbedding = true;
       const merged = new Map(candidates.map((card) => [card.id, card]));
-      for (const card of listMemoryCards(this.db, { status: 'active', limit: 200 })) {
+      for (const card of activeCards) {
         if (allowed(card) && card.embedding !== null) {
           merged.set(card.id, card);
         }

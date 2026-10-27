@@ -4,7 +4,7 @@
 
 ## 项目
 
-Lite Therapy 是一个本地优先的 AI 心理咨询 TUI。当前处于 M7 评估进行、M4 会后队列 6/6（技术完成）、M5 可选 embedding 已接、M6 技术完成、M3 技术完成且 DeepSeek flash 短会谈已验（长上下文待验）的状态：Prompt 分层与快照、安全规则、模型复核、危机卡、上下文预算、滚动摘要、预算设置与审计查看已落地；会后单次记录、纵向理解、督导、备忘录、来信、整理进度、内部记录与记忆提取/召回/记忆库/记忆设置/单次会谈开关/历史版本已接。安全检测是概率性的，不是保证。
+Lite Therapy 是一个本地优先的 AI 心理咨询 TUI。当前处于 M7 评估进行、M4 会后队列 6/6（技术完成）、M5 可选 embedding 已接、M6 技术完成、M3 技术完成且 DeepSeek flash 短会谈、28 轮自然多轮会谈与 6k 精简摘要已验（默认 12k 自然摘要、真实 embedding 待验）的状态：Prompt 分层与快照、安全规则、模型复核、危机卡、上下文预算、滚动摘要、预算设置与审计查看已落地；会后单次记录、纵向理解、督导、备忘录、来信、整理进度、内部记录与记忆提取/召回/记忆库/记忆设置/单次会谈开关/历史版本已接。安全检测是概率性的，不是保证。
 
 ## 开始前
 
@@ -84,7 +84,7 @@ export XDG_CACHE_HOME="$PWD/.cache"
 
 ## Git
 
-- 当前仓库还没有首个提交；不要删除 .git，不要改写历史，未经同意不要自行做首个提交或推送。
+- master 上已有本地提交；不要删除 .git，不要改写历史，未经同意不要推送或强制改写。
 - 不提交密钥、真实会谈数据、数据库、导出文件、node_modules、dist。
 - 不在未经用户同意时推送 remote 或改写分支。
 - 用户移动目录后，路径会变成 /home/sishen/Projects/lite-therapy；不要假设仍是 Agent_Psycho。
@@ -103,6 +103,7 @@ export XDG_CACHE_HOME="$PWD/.cache"
 - 安全规则与分类器共用模型 Provider；测试用 fake provider / fake classifier，不要调用真实模型。
 - 危机卡显示时，ChatScreen 忽略 Esc/Ctrl+C/Ctrl+Q；锁定仍可离开卡片，解锁后只保留风险标记。
 - 新增安全规则时同时补否定/影视/第三人称/过去时测试，避免把“朋友说他想自杀”误判为用户当下风险。否定-only 与第三人称 concern 在 ChatScreen 用非阻断提示；不要移除“不想”前的 `(?<!想)`，否则“我不确定想不想自杀”会被误判为否定。
+- `scanRiskText` 必须扫描每条规则的全部命中，并按分句收窄语境；只看第一个命中会把“朋友说他想自杀，其实我也想过自杀”整体压成第三人称。分句后的“我妈/我爸/我朋友”等仍是第三人称，不能因有“我”就重置为本人。
 - 会后任务不要记录或打印会谈正文；错误信息截断。备忘录只有通过五段结构校验才写 ready。
 - 记忆卡来源必须在当前会谈消息 ID 集合中；不要为了让提取“成功”放宽来源校验。
 - 记忆可配置独立 embedding 端点（`memory.embeddingBaseUrl`）；独立端点时不要发送聊天 API Key。更新记忆设置必须保留 embeddingModel/embeddingBaseUrl，否则会静默丢失配置。
@@ -112,7 +113,7 @@ export XDG_CACHE_HOME="$PWD/.cache"
 - 彻底删除在 AppService.wipeAllData：校验密码与路径后删除 data/config/log；不要把它改成可绕过密码的操作。
 - 仅 Linux 验证；macOS / Windows 未验证。
 - 本地安全评估用 npm run eval:safety；它只测规则，不代表安全，也不调用真实模型。
-- DeepSeek flash 短会谈验收发现推理 token 会吃满预算：memo/memory 的 maxTokens 已提到 3000；修改这些预算要有真实模型回归。`.env` 只用于本机验收，已被 gitignore，权限 0600，不要把 Key 写进代码/日志。
+- DeepSeek flash 短会谈验收发现推理 token 会吃满预算：memo/memory 的 maxTokens 已提到 3000，安全分类器提到 1000、默认超时 12s；修改这些预算要有真实模型回归。`.env` 只用于本机验收，已被 gitignore，权限 0600，不要把 Key 写进代码/日志。
 
 ## 完成汇报
 

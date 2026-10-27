@@ -98,7 +98,7 @@ export class ModelRiskClassifier implements RiskClassifier {
     this.profile = options.profile;
     this.provider = options.provider;
     this.apiKey = options.apiKey;
-    this.timeoutMs = options.timeoutMs ?? 8000;
+    this.timeoutMs = options.timeoutMs ?? 12000;
   }
 
   async classify(input: RiskClassifierInput): Promise<RiskClassifierResult> {
@@ -121,7 +121,8 @@ export class ModelRiskClassifier implements RiskClassifier {
         ],
         ...(this.apiKey !== undefined ? { apiKey: this.apiKey } : {}),
         temperature: 0,
-        maxTokens: 300,
+        // DeepSeek 等推理模型会先消耗推理 token；300 曾在混合句上截断 JSON。
+        maxTokens: 1000,
         timeoutMs: this.timeoutMs,
       })) {
         if (event.type === 'delta') {

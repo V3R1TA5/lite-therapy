@@ -190,6 +190,24 @@ describe('Home context settings', () => {
     unmount();
   });
 
+  it('navigates settings with Vim j', async () => {
+    const { service } = await setup();
+    const { stdin, unmount } = render(<Harness service={service} />);
+    await tick();
+
+    stdin.write('s');
+    await tick();
+    for (let index = 0; index < 4; index += 1) {
+      stdin.write('j');
+      await tick();
+    }
+    stdin.write('\r');
+    await tick(300);
+    expect(service.getConfig()?.theme).toBe('light');
+
+    unmount();
+  });
+
   it('toggles theme from settings and persists it', async () => {
     const { service } = await setup();
     const { stdin, lastFrame, unmount } = render(<Harness service={service} />);

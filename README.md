@@ -41,7 +41,7 @@
 - **预算设置与审计查看**：设置页可选择精简 / 保守 / 更长三档；最近上下文审计只显示消息 ID、角色、token、是否进入请求与警告，不显示正文。
 - **备份与恢复**：手动备份加密数据库、vault.json 与 config.toml；可浏览、输入备份密码并二次确认恢复；恢复前自动生成 pre-restore 安全备份。自动解锁模式需先设置启动密码才能创建备份。
 - **彻底删除**：警示 → 启动密码（自动解锁模式可留空）→ 输入“彻底删除”短语，删除数据库、vault、配置、日志与手动备份；明确提示 SSD 残留。
-- **验证**：39 个测试文件 / 203 个测试；CLI doctor；真实终端（PTY）+ 本地 fake 模型/分类器完成设置、会谈、危机卡与导出；另有 DeepSeek flash 短会谈、28 轮自然多轮会谈、默认 12k 自然摘要、6k 精简预算摘要、合成摘要、安全场景、备份恢复与 qwen3-embedding 真实回填/召回验收，见 docs/EVALUATION.md。
+- **验证**：39 个测试文件 / 204 个测试；CLI doctor；真实终端（PTY）+ 本地 fake 模型/分类器完成设置、会谈、危机卡与导出；另有 DeepSeek flash 短会谈、28 轮自然多轮会谈、默认 12k 自然摘要、6k 精简预算摘要、合成摘要、安全场景、备份恢复与 qwen3-embedding 真实回填/召回验收，见 docs/EVALUATION.md。
 
 ## 还不能做什么
 
@@ -70,7 +70,7 @@ npm run doctor
 npm run dev
 ```
 
-**npm run dev** 首次启动会进入设置向导。完成设置后进入主页；**Ctrl+Q** 退出（会谈中会先确认），**Ctrl+C** 也可从主页退出，**Ctrl+L** 锁定。会谈中若卡片出现，Esc / Ctrl+C 不会绕过它，请先选择一项安全动作。
+**npm run dev** 首次启动会进入设置向导。完成设置后进入主页；**Ctrl+Q** 在会谈中回到主页、在主页退出，**Ctrl+C** 也可退出，**Ctrl+L** 锁定。列表菜单支持 Vim 的 **j/k** 上下移动；进入会谈后禁用，避免影响输入。会谈中若卡片出现，Esc / Ctrl+C / Ctrl+Q 不会绕过它，请先选择一项安全动作。
 
 测试或便携使用可以指定独立目录，不会碰真实数据：
 
@@ -107,7 +107,7 @@ npm run doctor
 | npm run build | 构建 dist/cli.js |
 | npm run typecheck | TypeScript 检查 |
 | npm run lint | Biome 检查 |
-| npm test | Vitest（39 个文件 / 203 个测试） |
+| npm test | Vitest（39 个文件 / 204 个测试） |
 | npm run check | typecheck + lint + test |
 | npm run eval:safety | 本地安全规则评估，不调用模型 |
 | npm run eval:embedding | 本地 embedding 语义抽查，需要 Ollama 与指定模型 |

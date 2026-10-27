@@ -171,15 +171,16 @@ describe('ChatScreen', () => {
     unmount();
   });
 
-  it('asks for confirmation before quitting with Ctrl+Q', async () => {
+  it('returns home with Ctrl+Q instead of quitting the app', async () => {
     const { service } = await setup();
     const session = service.createSession();
     const onQuit = vi.fn();
+    const onExit = vi.fn();
     const { stdin, lastFrame, unmount } = render(
       <ChatScreen
         service={service}
         sessionId={session.id}
-        onExit={vi.fn()}
+        onExit={onExit}
         onLock={vi.fn()}
         onQuit={onQuit}
       />,
@@ -188,12 +189,9 @@ describe('ChatScreen', () => {
 
     stdin.write('\x11');
     await tick();
-    expect(lastFrame()).toContain('退出 Lite Therapy？');
+    expect(onExit).toHaveBeenCalledTimes(1);
     expect(onQuit).not.toHaveBeenCalled();
-
-    stdin.write('\r');
-    await tick();
-    expect(onQuit).toHaveBeenCalledTimes(1);
+    expect(lastFrame()).not.toContain('退出 Lite Therapy？');
 
     unmount();
   });

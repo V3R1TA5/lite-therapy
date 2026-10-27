@@ -33,8 +33,7 @@ type Menu =
   | 'deleteConfirm'
   | 'exportOptions'
   | 'exportPassword'
-  | 'exportResult'
-  | 'quitConfirm';
+  | 'exportResult';
 
 function statusLabel(status: SessionRecord['status']): string {
   if (status === 'active') {
@@ -77,7 +76,7 @@ function MessageRow(props: { message: MessageRecord; timezone: string }) {
 }
 
 export function ChatScreen(props: ChatScreenProps) {
-  const { service, sessionId, onExit, onPostSession, onLock, onQuit } = props;
+  const { service, sessionId, onExit, onPostSession, onLock } = props;
   const { columns } = useWindowSize();
 
   const [session, setSession] = useState<SessionRecord | null>(() => service.getSession(sessionId));
@@ -355,6 +354,10 @@ export function ChatScreen(props: ChatScreenProps) {
         }
         return;
       }
+      if (key.ctrl && inputValue === 'q') {
+        onExit();
+        return;
+      }
       if (menu !== 'none') {
         if (key.escape) {
           setError('');
@@ -373,10 +376,6 @@ export function ChatScreen(props: ChatScreenProps) {
           return;
         }
         setMenu('actions');
-        return;
-      }
-      if (key.ctrl && inputValue === 'q') {
-        setMenu('quitConfirm');
         return;
       }
       if (key.escape) {
@@ -417,6 +416,7 @@ export function ChatScreen(props: ChatScreenProps) {
         <Text color={uiColor('danger')}>{messages.chat.sessionMissing}</Text>
         <Box marginTop={1}>
           <SelectList
+            vimKeys={false}
             key="chat-session-missing-back"
             options={[{ value: 'back', label: messages.common.back }]}
             onSelect={() => onExit()}
@@ -479,6 +479,7 @@ export function ChatScreen(props: ChatScreenProps) {
         {menuError}
         <Box marginTop={1}>
           <SelectList
+            vimKeys={false}
             key="chat-actions"
             options={options}
             onSelect={(value) => {
@@ -513,6 +514,7 @@ export function ChatScreen(props: ChatScreenProps) {
         {menuError}
         <Box marginTop={1}>
           <SelectList
+            vimKeys={false}
             key="chat-end-confirm"
             options={[
               { value: 'yes', label: messages.chat.endConfirmYes },
@@ -542,6 +544,7 @@ export function ChatScreen(props: ChatScreenProps) {
         {menuError}
         <Box marginTop={1}>
           <SelectList
+            vimKeys={false}
             key="chat-delete-confirm"
             options={[
               { value: 'yes', label: messages.chat.deleteConfirmYes },
@@ -573,6 +576,7 @@ export function ChatScreen(props: ChatScreenProps) {
         </Text>
         <Box marginTop={1}>
           <SelectList
+            vimKeys={false}
             key="chat-export-options"
             options={[
               {
@@ -652,40 +656,13 @@ export function ChatScreen(props: ChatScreenProps) {
     );
   }
 
-  if (menu === 'quitConfirm') {
-    return (
-      <ScreenFrame
-        title={messages.chat.quitConfirmTitle}
-        subtitle={session.title}
-        footer="Esc 取消"
-      >
-        <Text>{messages.chat.quitConfirmBody}</Text>
-        <Box marginTop={1}>
-          <SelectList
-            key="chat-quit-confirm"
-            options={[
-              { value: 'yes', label: messages.chat.quitConfirmYes },
-              { value: 'no', label: messages.chat.quitConfirmNo },
-            ]}
-            onSelect={(value) => {
-              if (value === 'yes') {
-                onQuit();
-              } else {
-                setMenu('none');
-              }
-            }}
-          />
-        </Box>
-      </ScreenFrame>
-    );
-  }
-
   if (menu === 'exportResult') {
     return (
       <ScreenFrame title={messages.chat.exportSuccess} subtitle={session.title} footer="Enter 返回">
         <Text wrap="wrap">{exportPath}</Text>
         <Box marginTop={1}>
           <SelectList
+            vimKeys={false}
             key="chat-export-result"
             options={[
               { value: 'chat', label: messages.chat.exportAgain },

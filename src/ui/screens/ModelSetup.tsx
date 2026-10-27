@@ -268,7 +268,7 @@ export function ModelSetup(props: ModelSetupProps) {
           />
         </Box>
         <Box marginTop={1}>
-          <Text dimColor>留空也可以继续。Key 不会显示在界面上。</Text>
+          <Text dimColor>留空也可以继续。API Key 不会显示在界面上。</Text>
         </Box>
       </ScreenFrame>
     );

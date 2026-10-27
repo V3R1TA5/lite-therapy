@@ -122,6 +122,7 @@ export function CrisisCard(props: CrisisCardProps) {
         <Box marginTop={1}>
           <SelectList
             key="crisis-resources-back"
+            vimKeys={false}
             options={[{ value: 'back', label: messages.crisis.resourcesBack }]}
             onSelect={() => onBackFromResources()}
           />
@@ -151,6 +152,7 @@ export function CrisisCard(props: CrisisCardProps) {
       <Box marginTop={1} flexDirection="column">
         <SelectList
           key="crisis-actions"
+          vimKeys={false}
           options={[
             { value: 'safe' as const, label: messages.crisis.actionSafe },
             { value: 'continue' as const, label: messages.crisis.actionContinue },

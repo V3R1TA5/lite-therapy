@@ -91,6 +91,19 @@ export function SingleLineInput(props: SingleLineInputProps) {
 
   useInput(
     (input, key) => {
+      // Windows/自动化可能把文本和回车放在同一个 input 块里，同时把 key.return 设为 true。
+      // 必须先消费块内文本，否则提交的是上一帧的 value（常见表现是空密码或空消息）。
+      const newlineIndex = input.search(/[\r\n]/);
+      if (newlineIndex >= 0) {
+        const typed = input.slice(0, newlineIndex);
+        const next = value.slice(0, cursor) + typed + value.slice(cursor);
+        if (typed.length > 0) {
+          onChange(next);
+          setCursor(cursor + typed.length);
+        }
+        onSubmit(next);
+        return;
+      }
       if (key.return) {
         onSubmit(value);
         return;
@@ -133,21 +146,10 @@ export function SingleLineInput(props: SingleLineInputProps) {
         setCursor(0);
         return;
       }
-      if (key.tab) {
+      if (key.tab || input === '\t') {
         return;
       }
       if (input.length > 0 && !key.ctrl && !key.meta) {
-        // 某些终端（或自动化工具）会把“文本 + 回车”合并在一个数据块里。
-        // 这时 key.return 为 false；在第一个换行处提交，否则整段会被当成密码。
-        const newlineIndex = input.search(/[\r\n]/);
-        if (newlineIndex >= 0) {
-          const typed = input.slice(0, newlineIndex);
-          const next = value.slice(0, cursor) + typed + value.slice(cursor);
-          onChange(next);
-          setCursor(cursor + typed.length);
-          onSubmit(next);
-          return;
-        }
         insert(input);
       }
     },

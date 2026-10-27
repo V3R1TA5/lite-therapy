@@ -52,7 +52,7 @@ export function LockScreen(props: LockScreenProps) {
 
   useInput(
     (input, key) => {
-      if (key.tab) {
+      if (key.tab || input === '\t') {
         setMode('recoveryPhrase');
         setError('');
         return;

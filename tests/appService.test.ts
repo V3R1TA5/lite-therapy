@@ -247,6 +247,25 @@ describe('AppService', () => {
     service.shutdown();
   });
 
+  it('removes the auto-unlock key after recovery', async () => {
+    const paths = makePaths();
+    const service = makeService(paths);
+    const created = await service.beginSetupWithAutoUnlock();
+    service.lock();
+
+    await expect(
+      service.recoverWithPhrase(created.recoveryPhrase, 'recovered passphrase 123'),
+    ).resolves.toMatchObject({ phase: 'unlocked' });
+    expect(service.hasAutoUnlock()).toBe(false);
+
+    service.lock();
+    await expect(service.unlock('recovered passphrase 123')).resolves.toMatchObject({
+      phase: 'unlocked',
+    });
+
+    service.shutdown();
+  });
+
   it('recovers a vault with the recovery phrase and keeps the data', async () => {
     const paths = makePaths();
     const service = makeService(paths);

@@ -316,7 +316,7 @@ lite-therapy/
 - **M3**：Prompt 分层/快照/legacy、规则 + 模型复核、跨轮升级、risk_events、危机卡、本地资源、上下文预算、滚动摘要、预算设置、脱敏审计、fake 分类器 PTY 验收完成。DeepSeek 短会谈、28 轮自然多轮、默认 12k/6k 摘要、危机卡与真实安全场景已验。
 - **M4**：会后队列 6/6（session_note → case_formulation → supervision → memo → letter → memory）；结束即后台运行、单任务重试、5s/20s/60s 退避、重启续跑、备忘录带入、来信信箱、内部记录只读。
 - **M5**：记忆提取/召回/记忆库/开关/历史版本/召回评分完成；qwen3-embedding:0.6b 完成 1024 维真实回填与单组召回，另有 8 卡/6 查询抽查（top1 5/6）；模型/端点变化清空旧向量并提示回填。
-- **M6**：备份/恢复/彻底删除、JSON 导出、命令面板、主题/NO_COLOR、真实光标完成；IME 候选框与换行/窄终端视觉验收未做。
+- **M6**：备份/恢复/彻底删除、JSON 导出、命令面板、主题/NO_COLOR、真实光标完成；2026-10-27 复跑 80×24 浅色/NO_COLOR、40×20 窄屏保护与光标序列通过；IME 候选框与真实换行视觉复核仍未做。
 - **M7**：`docs/EVALUATION.md`、`eval:safety` 12/12、`eval:embedding`、许可证/密钥/发布检查、`release:check` 已做。
 - **仍待做**：真实中文 IME 候选框、UI 视觉复核、macOS/Windows、最终发布与推送。安全检测仍是概率性的，不能对外说“安全”。
 

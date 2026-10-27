@@ -207,6 +207,36 @@ describe('App', () => {
     unmount();
   });
 
+  it('locks and auto-unlocks with Ctrl+A', async () => {
+    const service = makeService();
+    await service.beginSetupWithAutoUnlock();
+    await service.completeOnboarding({
+      profile: {
+        displayName: '自动',
+        locale: 'zh-CN',
+        timezone: 'Asia/Tokyo',
+        ageBand: 'adult',
+      },
+      models: [],
+    });
+    service.lock();
+
+    const { stdin, lastFrame, unmount } = render(<App service={service} />);
+    await tick(300);
+    expect(lastFrame()).toContain('主页');
+
+    stdin.write('\x0c');
+    await tick(300);
+    expect(lastFrame()).toContain('已锁定');
+    expect(lastFrame()).toContain('Ctrl+A 自动解锁');
+
+    stdin.write('\x01');
+    await tick(300);
+    expect(lastFrame()).toContain('主页');
+
+    unmount();
+  });
+
   it('unlocks into the home screen with the stored passphrase', async () => {
     const service = makeService();
     await service.beginSetup('test passphrase 123');

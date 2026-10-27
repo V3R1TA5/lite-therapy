@@ -25,6 +25,8 @@ npm run build
 npm run check
 npm run release:check
 npm run dev
+npm run eval:safety
+npm run eval:embedding
 ~~~
 
 当前 shell 可能全局设置 NODE_ENV=production。安装依赖时用：
@@ -108,7 +110,7 @@ export XDG_CACHE_HOME="$PWD/.cache"
 - 记忆卡来源必须在当前会谈消息 ID 集合中；不要为了让提取“成功”放宽来源校验。
 - 记忆可配置独立 embedding 端点（`memory.embeddingBaseUrl`）；独立端点时不要发送聊天 API Key。更新记忆设置必须保留 embeddingModel/embeddingBaseUrl，否则会静默丢失配置。
 - `provider.embed` 必须作为方法调用（`provider.embed(...)`），不要先解构再单独调用；OpenAICompatibleProvider 会读 `this.fetchImpl`，解构会丢绑定并在真实调用时崩溃。
-- 真实 embedding 只用 qwen3-embedding:0.6b 验过 1024 维、单查询、两张卡；模型/端点变化时 updateMemorySettings 会清空旧向量并需重新回填，但仍无自动重建或维度校验，别把单组结果当质量保证。
+- 真实 embedding 只用 qwen3-embedding:0.6b 验过 1024 维；应用内是单查询/两张卡，另有 `npm run eval:embedding` 的 8 卡/6 查询抽查（top1 5/6）。模型/端点变化时 updateMemorySettings 会清空旧向量并需重新回填，但仍无自动重建或维度校验，别把单组结果当质量保证。
 - 编辑记忆会写 memory_card_revisions（008）；历史文本是敏感数据，仍只存在本机。
 - 记忆库 UI 在 src/ui/screens/MemoriesScreen.tsx：编辑/归档/删除只动本机卡片；全局关闭后 ChatService 不召回，但卡片仍保留。
 - 备份/恢复在 AppService.createBackup / restoreBackup：备份用 VACUUM INTO + vault/config 复制，不含 secrets.enc；恢复前生成 pre-restore 安全备份并锁屏。

@@ -31,6 +31,7 @@
     "spike:vault": "tsx spikes/vault.ts",
     "spike:ink": "tsx spikes/ink-shell.tsx",
     "eval:safety": "tsx scripts/evaluate-safety.ts",
+    "eval:embedding": "tsx scripts/evaluate-embedding.ts",
     "check:licenses": "tsx scripts/check-licenses.ts",
     "check:secrets": "tsx scripts/check-secrets.ts",
     "release:check": "npm run check && npm run eval:safety && npm run check:licenses && npm run check:secrets && npm run doctor && npm run build"

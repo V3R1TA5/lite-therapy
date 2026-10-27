@@ -71,6 +71,7 @@
 - 查询“职业发展让我很焦虑”与两张卡都没有 FTS 三字片段重叠；召回仍把“来访者说最近工作压力很大，晚上睡不好。”排在第一，家庭卡第二；reason 为 `fts5+coverage+embedding`，分数约 0.504 / 0.463。
 - 端到端用真实 AppService + 真实 embedding + fake 聊天 provider：ChatService 的系统提示包含“工作压力很大”卡片，不包含家庭卡；审计 `memoryUsed=true`，无 warning。
 - 验收后临时家庭卡已删除，原工作卡保留向量。
+- 新增 `npm run eval:embedding`：8 张合成卡、6 个查询，可重复跑本地 embedding 抽查；当前 qwen3 top1 为 5/6，不是 CI 门槛。
 
 ### 回归
 

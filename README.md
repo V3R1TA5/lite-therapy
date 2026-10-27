@@ -108,6 +108,7 @@ npm run doctor
 | npm test | Vitest（39 个文件 / 192 个测试） |
 | npm run check | typecheck + lint + test |
 | npm run eval:safety | 本地安全规则评估，不调用模型 |
+| npm run eval:embedding | 本地 embedding 语义抽查，需要 Ollama 与指定模型 |
 | npm run check:licenses | 检查运行时依赖许可证 |
 | npm run check:secrets | 扫描仓库中的明显密钥 |
 | npm run release:check | 发布前一键检查 |

@@ -9,11 +9,13 @@ npm run check
 npm run doctor
 npm run build
 npm run eval:safety
+npm run eval:embedding
 ~~~
 
 - `npm run check`：类型、lint、单元/TUI 测试。
 - `npm run doctor`：SQLCipher、FTS5、迁移 001–008、vault、密钥、权限。
 - `npm run eval:safety`：只跑本地安全规则场景，不调用模型、不读取真实数据、不写数据库。
+- `npm run eval:embedding`：用 8 张合成卡、6 个查询跑本地 embedding 抽查；需要 Ollama 与模型，默认 `qwen3-embedding:0.6b`，不读真实会谈，不是 CI 门槛。可用 `EMBEDDING_BASE_URL` / `EMBEDDING_MODEL` 覆盖；`EMBEDDING_STRICT=1` 时 top1 未全中会退出 1。
 
 ## 2. 本地安全规则场景
 

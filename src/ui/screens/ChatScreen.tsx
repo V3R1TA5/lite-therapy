@@ -281,7 +281,7 @@ export function ChatScreen(props: ChatScreenProps) {
 
   const submitExport = async (submittedPassword: string = password) => {
     setPassword(submittedPassword);
-    if (submittedPassword.length === 0) {
+    if (submittedPassword.length === 0 && !service.hasAutoUnlock()) {
       setError('请输入启动密码。');
       return;
     }

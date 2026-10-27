@@ -70,6 +70,28 @@ export function App(props: AppProps) {
         if (snapshot.phase === 'setup') {
           setView({ kind: 'setup', resume: false, config: snapshot.config });
         } else if (snapshot.phase === 'locked') {
+          if (service.hasAutoUnlock()) {
+            try {
+              const unlocked = await service.autoUnlock();
+              if (cancelled) {
+                return;
+              }
+              if (unlocked.onboardingComplete && unlocked.config) {
+                setView({ kind: 'home', config: unlocked.config });
+              } else {
+                setView({ kind: 'setup', resume: true, config: unlocked.config });
+              }
+              return;
+            } catch (autoError) {
+              if (!cancelled) {
+                setView({
+                  kind: 'locked',
+                  notice: messages.lock.autoUnlockFailed + ' ' + errorMessage(autoError),
+                });
+              }
+              return;
+            }
+          }
           setView({ kind: 'locked' });
         } else if (snapshot.onboardingComplete && snapshot.config) {
           setView({ kind: 'home', config: snapshot.config });

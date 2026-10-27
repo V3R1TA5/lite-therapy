@@ -115,6 +115,7 @@ export XDG_CACHE_HOME="$PWD/.cache"
 - 记忆库 UI 在 src/ui/screens/MemoriesScreen.tsx：编辑/归档/删除只动本机卡片；全局关闭后 ChatService 不召回，但卡片仍保留。
 - 备份/恢复在 AppService.createBackup / restoreBackup：备份用 VACUUM INTO + vault/config 复制，不含 secrets.enc；恢复前生成 pre-restore 安全备份并锁屏。
 - 彻底删除在 AppService.wipeAllData：校验密码与路径后删除 data/config/log；不要把它改成可绕过密码的操作。
+- 自动解锁模式在 config/auto-unlock.key 存随机密钥（0600），启动自动解锁、锁定屏 Ctrl+A；拿到整个目录可解密。改密/恢复/恢复备份后必须移除；自动模式创建备份必须先设置密码。
 - 仅 Linux 验证；macOS / Windows 未验证。
 - 本地安全评估用 npm run eval:safety；它只测规则，不代表安全，也不调用真实模型。
 - DeepSeek flash 短会谈验收发现推理 token 会吃满预算：memo/memory 的 maxTokens 已提到 3000，安全分类器提到 1000、默认超时 12s；修改这些预算要有真实模型回归。`.env` 只用于本机验收，已被 gitignore，权限 0600，不要把 Key 写进代码/日志。

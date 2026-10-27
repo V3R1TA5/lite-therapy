@@ -26,6 +26,7 @@ import { ModelSetup, type ModelSetupResult } from './ModelSetup.js';
 
 const FRESH_STEPS = [
   'consent',
+  'security',
   'passphrase',
   'passphraseConfirm',
   'recoveryShow',
@@ -37,6 +38,15 @@ const FRESH_STEPS = [
 ] as const;
 
 type WizardStep = (typeof FRESH_STEPS)[number];
+
+const AUTO_STEPS = [
+  'consent',
+  'security',
+  'profileName',
+  'profileAge',
+  'profileTimezone',
+  'model',
+] as const satisfies readonly WizardStep[];
 
 const RESUME_STEPS = [
   'profileName',
@@ -55,9 +65,13 @@ export interface SetupWizardProps {
 
 export function SetupWizard(props: SetupWizardProps) {
   const { service, resume, initialConfig, onComplete, onQuit } = props;
-  const steps: readonly WizardStep[] = resume ? RESUME_STEPS : FRESH_STEPS;
-
   const [stepIndex, setStepIndex] = useState(0);
+  const [securityMode, setSecurityMode] = useState<'password' | 'auto' | null>(null);
+  const steps: readonly WizardStep[] = resume
+    ? RESUME_STEPS
+    : securityMode === 'auto'
+      ? AUTO_STEPS
+      : FRESH_STEPS;
   const [passphrase, setPassphrase] = useState('');
   const [confirmation, setConfirmation] = useState('');
   const [recoveryPhrase, setRecoveryPhrase] = useState('');
@@ -98,6 +112,23 @@ export function SetupWizard(props: SetupWizardProps) {
       setAnswer('');
     }
     setStepIndex((current) => Math.max(0, current - 1));
+  };
+
+  const chooseAutoUnlock = () => {
+    setBusy(true);
+    setError('');
+    void service
+      .beginSetupWithAutoUnlock()
+      .then(() => {
+        setSecurityMode('auto');
+        setVaultCreated(true);
+        setBusy(false);
+        goNext();
+      })
+      .catch((setupError: unknown) => {
+        setBusy(false);
+        setError(errorMessage(setupError));
+      });
   };
 
   const prepareRecovery = (submittedConfirmation: string = confirmation) => {
@@ -238,6 +269,58 @@ export function SetupWizard(props: SetupWizardProps) {
             }}
           />
         </Box>
+      </ScreenFrame>
+    );
+  }
+
+  if (step === 'security') {
+    const options = [
+      {
+        value: 'password' as const,
+        label: messages.setup.securityPassword,
+        hint: messages.setup.securityPasswordHint,
+      },
+      {
+        value: 'auto' as const,
+        label: messages.setup.securityAuto,
+        hint: messages.setup.securityAutoHint,
+      },
+    ];
+    return (
+      <ScreenFrame
+        title={messages.setup.securityTitle}
+        subtitle={stepLabel}
+        footer={'↑↓ 选择 · Enter 确认' + backHint}
+      >
+        <Text wrap="wrap" dimColor>
+          {messages.setup.securityHint}
+        </Text>
+        <Box marginTop={1} flexDirection="column">
+          <SelectList
+            key="setup-security"
+            options={options}
+            isActive={!busy}
+            onEscape={canGoBack ? goBack : undefined}
+            onSelect={(value) => {
+              if (value === 'password') {
+                setSecurityMode('password');
+                goNext();
+              } else {
+                chooseAutoUnlock();
+              }
+            }}
+          />
+        </Box>
+        {busy ? (
+          <Box marginTop={1}>
+            <Text color={uiColor('warning')}>{messages.setup.securityAutoBusy}</Text>
+          </Box>
+        ) : null}
+        {error.length > 0 ? (
+          <Box marginTop={1}>
+            <Text color={uiColor('danger')}>{error}</Text>
+          </Box>
+        ) : null}
       </ScreenFrame>
     );
   }

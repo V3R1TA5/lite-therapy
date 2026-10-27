@@ -304,7 +304,7 @@ export function HomeScreen(props: HomeScreenProps) {
 
   const submitExportAll = async (submitted?: string) => {
     const password = submitted ?? exportAllPassword;
-    if (password.length === 0) {
+    if (password.length === 0 && !service.hasAutoUnlock()) {
       setError('请输入启动密码。');
       return;
     }
@@ -324,7 +324,7 @@ export function HomeScreen(props: HomeScreenProps) {
 
   const submitBackup = async (submitted?: string) => {
     const password = submitted ?? backupPassword;
-    if (password.length === 0) {
+    if (password.length === 0 && !service.hasAutoUnlock()) {
       setError('请输入启动密码。');
       return;
     }
@@ -365,7 +365,7 @@ export function HomeScreen(props: HomeScreenProps) {
       setError('确认短语不正确。请输入“彻底删除”。');
       return;
     }
-    if (wipePassword.length === 0) {
+    if (wipePassword.length === 0 && !service.hasAutoUnlock()) {
       setError('缺少启动密码，请返回重试。');
       return;
     }
@@ -453,7 +453,7 @@ export function HomeScreen(props: HomeScreenProps) {
     const submit = async (submitted?: string) => {
       if (passStage === 'old') {
         const current = submitted ?? oldPassphrase;
-        if (current.length === 0) {
+        if (current.length === 0 && !service.hasAutoUnlock()) {
           setError('请输入当前启动密码。');
           return;
         }
@@ -497,7 +497,11 @@ export function HomeScreen(props: HomeScreenProps) {
         subtitle={title}
         footer={'Enter 继续 · Esc 返回 · 恢复短语保持不变'}
       >
-        <Text dimColor>修改后恢复短语继续有效，旧启动密码立即失效。</Text>
+        <Text dimColor>
+          {service.hasAutoUnlock()
+            ? '当前为本机自动解锁：当前密码可留空；设置新密码后会关闭自动解锁。'
+            : '修改后恢复短语继续有效，旧启动密码立即失效。'}
+        </Text>
         <Box marginTop={1}>
           <SingleLineInput
             value={value}

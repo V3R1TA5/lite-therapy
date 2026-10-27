@@ -199,6 +199,33 @@ describe('AppService', () => {
     service.shutdown();
   });
 
+  it('creates an auto-unlock key and uses it after lock', async () => {
+    const paths = makePaths();
+    const service = makeService(paths);
+    const created = await service.beginSetupWithAutoUnlock();
+    expect(created.recoveryPhrase.split(' ')).toHaveLength(12);
+    expect(service.hasAutoUnlock()).toBe(true);
+    const keyPath = join(paths.config, 'auto-unlock.key');
+    expect(statSync(keyPath).mode & 0o777).toBe(0o600);
+    expect(readFileSync(keyPath, 'utf8').trim().length).toBeGreaterThanOrEqual(8);
+
+    service.lock();
+    const unlocked = await service.autoUnlock();
+    expect(unlocked.phase).toBe('unlocked');
+    expect(unlocked.config?.onboardingCompletedAt).toBeUndefined();
+    await expect(service.createBackup('')).rejects.toMatchObject({ code: 'INVALID_INPUT' });
+
+    await service.changePassphrase('', 'new passphrase 123');
+    expect(service.hasAutoUnlock()).toBe(false);
+    service.lock();
+    await expect(service.autoUnlock()).rejects.toMatchObject({ code: 'NOT_SETUP' });
+    await expect(service.unlock('new passphrase 123')).resolves.toMatchObject({
+      phase: 'unlocked',
+    });
+
+    service.shutdown();
+  });
+
   it('recovers a vault with the recovery phrase and keeps the data', async () => {
     const paths = makePaths();
     const service = makeService(paths);

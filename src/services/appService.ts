@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import {
   chmodSync,
   copyFileSync,
@@ -248,6 +249,54 @@ export class AppService {
    * 首次设置。调用方应先在界面上展示并让用户确认恢复短语，
    * 再把同一个短语传进来；这样中途退出不会留下“短语从未抄下”的保险库。
    */
+  private autoUnlockPath(): string {
+    return join(this.paths.config, 'auto-unlock.key');
+  }
+
+  private writeAutoUnlockKey(passphrase: string): void {
+    mkdirSync(this.paths.config, { recursive: true, mode: 0o700 });
+    writeFileAtomic(this.autoUnlockPath(), passphrase + '\n', 0o600);
+  }
+
+  private removeAutoUnlockKey(): void {
+    rmSync(this.autoUnlockPath(), { force: true });
+  }
+
+  private readAutoUnlockSecret(): string | null {
+    try {
+      const secret = readFileSync(this.autoUnlockPath(), 'utf8').trim();
+      return secret.length >= 8 ? secret : null;
+    } catch {
+      return null;
+    }
+  }
+
+  hasAutoUnlock(): boolean {
+    return this.readAutoUnlockSecret() !== null;
+  }
+
+  async beginSetupWithAutoUnlock(): Promise<{ recoveryPhrase: string; config: AppConfig }> {
+    if (vaultExists(this.vaultPath)) {
+      throw new AppServiceError('ALREADY_SETUP', '保险库已经存在，请直接解锁。');
+    }
+    const passphrase = randomBytes(32).toString('base64url');
+    this.writeAutoUnlockKey(passphrase);
+    try {
+      return await this.beginSetup(passphrase);
+    } catch (error) {
+      this.removeAutoUnlockKey();
+      throw error;
+    }
+  }
+
+  async autoUnlock(): Promise<AppSnapshot> {
+    const passphrase = this.readAutoUnlockSecret();
+    if (passphrase === null) {
+      throw new AppServiceError('NOT_SETUP', '没有可用的自动解锁密钥。');
+    }
+    return await this.unlock(passphrase);
+  }
+
   async beginSetup(
     passphrase: string,
     recoveryPhrase?: string,
@@ -350,6 +399,7 @@ export class AppService {
     try {
       const updated = await replacePassphrase(vault, key, newPassphrase);
       saveVaultFile(this.vaultPath, updated);
+      this.removeAutoUnlockKey();
       await this.openDatabase(key);
       config = this.loadOrCreateConfig(vault.createdAt);
       apiKeys = loadSecretsFile(this.secretsPath, key);
@@ -373,10 +423,14 @@ export class AppService {
   async verifyPassphrase(passphrase: string): Promise<void> {
     this.requireUnlocked();
     this.assertNotThrottled();
+    const secret = passphrase.length === 0 ? this.readAutoUnlockSecret() : passphrase;
+    if (secret === null) {
+      throw new AppServiceError('WRONG_PASSPHRASE', '启动密码不正确。');
+    }
     const vault = loadVaultFile(this.vaultPath);
     let key: Buffer;
     try {
-      key = await unlockVault(vault, passphrase);
+      key = await unlockVault(vault, secret);
     } catch (error) {
       const delay = this.lockout.recordFailure();
       throw new AppServiceError('WRONG_PASSPHRASE', '启动密码不正确。', {
@@ -396,6 +450,12 @@ export class AppService {
 
   async createBackup(passphrase: string): Promise<string> {
     this.requireUnlocked();
+    if (passphrase.length === 0 && this.hasAutoUnlock()) {
+      throw new AppServiceError(
+        'INVALID_INPUT',
+        '自动解锁模式请先在设置里设置启动密码，再创建可恢复的备份。',
+      );
+    }
     await this.verifyPassphrase(passphrase);
     if (this.db === null) {
       throw new AppServiceError('NOT_UNLOCKED', '数据库尚未打开。');
@@ -556,6 +616,8 @@ export class AppService {
     if (existsSync(secretsPath)) {
       renameSync(secretsPath, secretsPath + '.restored-away-' + stamp);
     }
+    // 恢复的是另一份保险库，旧自动解锁密钥不再适用。
+    this.removeAutoUnlockKey();
     return safetyDir;
   }
 
@@ -625,10 +687,14 @@ export class AppService {
       throw new AppServiceError('INVALID_PASSPHRASE', passphraseIssue);
     }
 
+    const oldSecret = oldPassphrase.length === 0 ? this.readAutoUnlockSecret() : oldPassphrase;
+    if (oldSecret === null) {
+      throw new AppServiceError('WRONG_PASSPHRASE', '当前启动密码不正确。');
+    }
     const vault = loadVaultFile(this.vaultPath);
     let verified: Buffer;
     try {
-      verified = await unlockVault(vault, oldPassphrase);
+      verified = await unlockVault(vault, oldSecret);
     } catch (error) {
       throw new AppServiceError('WRONG_PASSPHRASE', '当前启动密码不正确。', { cause: error });
     }
@@ -639,6 +705,8 @@ export class AppService {
       }
       const updated = await replacePassphrase(vault, this.dbKey, newPassphrase);
       saveVaultFile(this.vaultPath, updated);
+      // 用户重新设了密码，自动解锁不应继续绕过它。
+      this.removeAutoUnlockKey();
     } finally {
       wipe(verified);
     }

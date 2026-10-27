@@ -88,6 +88,9 @@ describe('App', () => {
 
     stdin.write('\r');
     await tick();
+    expect(lastFrame()).toContain('选择解锁方式');
+    stdin.write('\r');
+    await tick();
     expect(lastFrame()).toContain('设置启动密码');
 
     stdin.write('test passphrase 123');
@@ -118,6 +121,8 @@ describe('App', () => {
 
     stdin.write('\r');
     await tick();
+    stdin.write('\r');
+    await tick();
     stdin.write('test passphrase 123\r');
     await tick();
     stdin.write('test passphrase 123\r');
@@ -131,6 +136,48 @@ describe('App', () => {
     stdin.write('\x1b');
     await tick();
     expect(lastFrame()).toContain('设置启动密码');
+
+    unmount();
+  });
+
+  it('sets up with the auto-unlock choice from the wizard', async () => {
+    const service = makeService();
+    const { stdin, lastFrame, unmount } = render(<App service={service} />);
+    await tick();
+
+    stdin.write('\r');
+    await tick();
+    expect(lastFrame()).toContain('选择解锁方式');
+    stdin.write('\x1b[B');
+    await tick();
+    stdin.write('\r');
+    await tick(400);
+
+    expect(lastFrame()).toContain('怎么称呼你');
+    expect(service.hasAutoUnlock()).toBe(true);
+
+    unmount();
+  });
+
+  it('auto-unlocks into home when the local key exists', async () => {
+    const service = makeService();
+    await service.beginSetupWithAutoUnlock();
+    await service.completeOnboarding({
+      profile: {
+        displayName: '自动',
+        locale: 'zh-CN',
+        timezone: 'Asia/Tokyo',
+        ageBand: 'adult',
+      },
+      models: [],
+    });
+    service.lock();
+
+    const { lastFrame, unmount } = render(<App service={service} />);
+    await tick(300);
+
+    expect(lastFrame()).toContain('主页');
+    expect(lastFrame()).toContain('自动');
 
     unmount();
   });

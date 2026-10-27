@@ -31,6 +31,7 @@ export function LockScreen(props: LockScreenProps) {
   const [busy, setBusy] = useState(false);
   const [blockedUntil, setBlockedUntil] = useState(0);
   const [remaining, setRemaining] = useState(0);
+  const [autoUnlocking, setAutoUnlocking] = useState(false);
 
   useEffect(() => {
     if (blockedUntil === 0) {
@@ -50,14 +51,28 @@ export function LockScreen(props: LockScreenProps) {
   }, [blockedUntil]);
 
   useInput(
-    (_input, key) => {
+    (input, key) => {
       if (key.tab) {
         setMode('recoveryPhrase');
         setError('');
         return;
       }
+      if (key.ctrl && input === 'a' && service.hasAutoUnlock()) {
+        setAutoUnlocking(true);
+        setError('');
+        void service
+          .autoUnlock()
+          .then((snapshot) => {
+            setAutoUnlocking(false);
+            onUnlocked(snapshot);
+          })
+          .catch((unlockError: unknown) => {
+            setAutoUnlocking(false);
+            setError(errorMessage(unlockError));
+          });
+      }
     },
-    { isActive: mode === 'unlock' && !busy && remaining === 0 },
+    { isActive: mode === 'unlock' && !busy && !autoUnlocking && remaining === 0 },
   );
 
   const unlock = async (submittedPassphrase: string = passphrase) => {
@@ -103,7 +118,12 @@ export function LockScreen(props: LockScreenProps) {
       });
   };
 
-  const footer = mode === 'unlock' ? 'Tab 用恢复短语 · Ctrl+C 退出' : 'Esc 返回 · Ctrl+C 退出';
+  const footer =
+    mode === 'unlock'
+      ? service.hasAutoUnlock()
+        ? 'Ctrl+A 自动解锁 · Tab 用恢复短语 · Ctrl+C 退出'
+        : 'Tab 用恢复短语 · Ctrl+C 退出'
+      : 'Esc 返回 · Ctrl+C 退出';
 
   const back = () => {
     setError('');
@@ -125,6 +145,9 @@ export function LockScreen(props: LockScreenProps) {
         </Box>
         <Box marginTop={1} flexDirection="column">
           <Text>{messages.lock.prompt}</Text>
+          {service.hasAutoUnlock() ? (
+            <Text dimColor>本机自动解锁已开启，按 Ctrl+A 解锁；也可以输入密码。</Text>
+          ) : null}
           <SingleLineInput
             value={passphrase}
             onChange={setPassphrase}

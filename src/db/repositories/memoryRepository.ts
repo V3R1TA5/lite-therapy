@@ -373,6 +373,13 @@ export function deleteMemoriesForSession(db: DatabaseConnection, sessionId: stri
   );
 }
 
+export function clearMemoryEmbeddings(db: DatabaseConnection): number {
+  const result = db
+    .prepare('UPDATE memory_cards SET embedding = NULL WHERE embedding IS NOT NULL')
+    .run();
+  return result.changes;
+}
+
 export function updateMemoryEmbedding(
   db: DatabaseConnection,
   id: string,

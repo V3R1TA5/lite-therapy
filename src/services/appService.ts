@@ -44,6 +44,7 @@ import {
 import {
   archiveMemoryCard,
   clearMemoryCards,
+  clearMemoryEmbeddings,
   confirmMemoryCard,
   countMemoriesForSession,
   deleteMemoriesForSession,
@@ -1138,8 +1139,15 @@ export class AppService {
         embeddingBaseUrl: embeddingBaseUrl.length > 0 ? normalizeBaseUrl(embeddingBaseUrl) : '',
       },
     });
+    const embeddingChanged =
+      base.memory.embeddingModel !== next.memory.embeddingModel ||
+      base.memory.embeddingBaseUrl !== next.memory.embeddingBaseUrl;
     saveAppConfig(this.configPath, next);
     this.config = next;
+    // 不同模型/端点的向量不可比较；换配置时清掉旧向量，由用户重新回填。
+    if (embeddingChanged && this.db !== null) {
+      clearMemoryEmbeddings(this.db);
+    }
     return next;
   }
 

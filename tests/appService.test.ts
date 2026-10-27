@@ -8,6 +8,8 @@ import {
   type ModelProfile,
 } from '../src/config/appConfig.js';
 import type { AppPaths } from '../src/config/paths.js';
+import type { DatabaseConnection } from '../src/db/database.js';
+import { getMemoryCard, insertMemoryCard } from '../src/db/repositories/memoryRepository.js';
 import type { ChatProvider } from '../src/providers/types.js';
 import { AppService } from '../src/services/appService.js';
 import { LockoutGate } from '../src/services/lockout.js';
@@ -119,6 +121,27 @@ describe('AppService', () => {
       embeddingModel: '',
       embeddingBaseUrl: '',
     });
+    const db = (service as unknown as { db: DatabaseConnection }).db;
+    const memorySession = service.createSession();
+    insertMemoryCard(db, {
+      id: 'embedding-change-card',
+      kind: 'theme',
+      text: '工作压力反复出现',
+      textHash: 'embedding-change-hash',
+      sourceSessionId: memorySession.id,
+      sourceMessageIds: ['test-message'],
+      confidence: 0.8,
+      sensitivity: 'normal',
+      tags: [],
+      uncertain: false,
+      embedding: [0.1, 0.2],
+      model: 'test',
+      promptVersion: 'v1',
+      createdAt: '2026-10-27T00:00:00.000Z',
+    });
+    await service.updateMemorySettings({ ...memoryUpdated.memory, enabled: true });
+    expect(getMemoryCard(db, 'embedding-change-card')?.embedding).toEqual([0.1, 0.2]);
+
     const embeddingUpdated = await service.updateMemorySettings({
       ...memoryUpdated.memory,
       embeddingModel: 'nomic-embed-text',
@@ -126,6 +149,7 @@ describe('AppService', () => {
     });
     expect(embeddingUpdated.memory.embeddingModel).toBe('nomic-embed-text');
     expect(embeddingUpdated.memory.embeddingBaseUrl).toBe('http://127.0.0.1:11434/v1');
+    expect(getMemoryCard(db, 'embedding-change-card')?.embedding).toBeNull();
     await expect(
       service.updateMemorySettings({
         ...embeddingUpdated.memory,

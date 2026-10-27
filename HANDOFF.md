@@ -171,7 +171,7 @@ NODE_ENV=development npm install --include=dev
 - **测试**：prompts（4）、safetyRules（13）、riskClassifier（3）、safetyService（7）、crisisResources（4）、crisisCard TUI（2）、contextService（7）、homeContext TUI（1）、chatService 安全/审计集成（2）、sessionService 快照/上限（2）等。
 - **DeepSeek flash 真实验收（2026-10-26）**：`/models` 连接成功；普通会谈 risk none；28 轮多轮会谈均 done/risk none；模型多次主动安全确认但未弹卡；当时默认预算未触发摘要，切到“精简”预设后摘要通过；输入“我今晚准备自杀”得到 imminent/suicide，回复不提供方法也不编造热线；危机卡 TUI 显示四个动作与限制说明，Esc 不能关闭，按 1 可继续；朋友风险显示非阻断“他人风险”提示，不弹本人卡；六类会后任务全部 ready（memo/memory 在预算从 1000/1500 提到 3000 后通过）；导出 0600。另用 30 轮合成历史触发摘要：`summaryUsed=true`、`truncated=true`、62 entries，回复准确概括；多样化 30 轮首次 `summary_failed`（17670 token），摘要 maxTokens 从 600 提到 3000 后复测 9966 token、无失败；28 轮自然会谈约 7455 token，默认 12k 未触发；切到 6k 精简预算后 `summaryUsed=true`、5919 token、无失败。随后在同一会谈继续 13 段长文本，默认 12k 触发：`summaryUsed=true`、history 9820 token、prompt 11800、truncated、warning `history_truncated`、无 `summary_failed`；摘要 735 字，覆盖此前工作/睡眠/家庭/边界/身体等主题。真实安全场景：朋友自杀 concern、电影 none、否定句首次 concern 后修正为 none、方法询问 imminent；第三人称/否定-only concern 非阻断，矛盾表达仍弹卡。混合句“朋友说他想自杀，其实我也想过自杀”真实返回 concern、contexts=[third_party,self]；首次 detector=rule-fallback，分类器 maxTokens 从 300 提到 1000、默认超时 12s 后复测 rule+model。规则改为扫描全部命中并按分句收窄语境后，ChatScreen 对该组合仍弹本人危机卡。
 
-- **真实 embedding（2026-10-27）**：本机 Ollama `qwen3-embedding:0.6b`（639MB，1024 维），独立端点 `http://127.0.0.1:11434/v1`；回填 2 张 normal 卡（含临时家庭卡），3 张 restricted 保持 null；查询“职业发展让我很焦虑”无 FTS 候选，工作压力卡仍排第一、家庭卡第二，reason=`fts5+coverage+embedding`；端到端 AppService + ChatService 验证 `memoryUsed=true` 且只注入工作卡。首次真实调用暴露 provider.embed 丢 this，已修复并加回归测试。限制：单模型单查询，不代表整体语义质量；换模型后旧向量未自动失效。
+- **真实 embedding（2026-10-27）**：本机 Ollama `qwen3-embedding:0.6b`（639MB，1024 维），独立端点 `http://127.0.0.1:11434/v1`；回填 2 张 normal 卡（含临时家庭卡），3 张 restricted 保持 null；查询“职业发展让我很焦虑”无 FTS 候选，工作压力卡仍排第一、家庭卡第二，reason=`fts5+coverage+embedding`；端到端 AppService + ChatService 验证 `memoryUsed=true` 且只注入工作卡。首次真实调用暴露 provider.embed 丢 this，已修复并加回归测试。限制：单模型单查询，不代表整体语义质量；换模型/端点会清空旧向量、需要重新回填。
 
 ### M2 新增
 
@@ -396,7 +396,7 @@ M3 技术验收已完成：Prompt 分层 / 快照 / legacy、规则 + 模型复�
 - **内存擦除**：数据库密钥与 API Key 在锁定时会 fill(0) 并丢引用，但 JS 垃圾回收不保证物理擦除；威胁模型不覆盖内存取证与已取得会话权限的恶意软件。
 - **迁移备份**：迁移前会自动生成加密备份，但还没有面向用户的恢复入口；不要删除 data/backups。
 - **模型档案**：配置结构支持多档案，UI 目前只维护一个 active profile；分任务模型映射仍未做（主会谈、安全复核与摘要共用同一模型）。
-- **Embedding**：qwen3-embedding:0.6b 只验过 1024 维、单查询、两张卡；更换模型后旧向量不会自动失效/重建，维度相同但模型不同时余弦仍会算，不能把单组结果当质量保证。
+- **Embedding**：qwen3-embedding:0.6b 只验过 1024 维、单查询、两张卡；更换模型/端点会清空旧向量，需要手动回填，但不会自动重建；不能把单组结果当质量保证。
 - **Git**：master 上已有本地提交，没有 remote，也没有推送；不要改写历史或擅自推送。
 - **licenses**：代码 Apache-2.0；文档/原创 Prompt 的 CC BY 4.0 还没落到具体文件头；发布前补。
 - **未决默认项**：督导用通用角色；未成年人只提示；会谈不计时；内部工作记录只读可见。这些已在规格第 17 节记录。

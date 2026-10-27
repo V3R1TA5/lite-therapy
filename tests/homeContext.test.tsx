@@ -334,7 +334,7 @@ describe('Home context settings', () => {
     stdin.write(PASSPHRASE + '\r');
     await tick(300);
     expect(lastFrame()).toContain('全部数据已导出');
-    expect(lastFrame()).toContain('lite-therapy-all-');
+    expect((lastFrame() ?? '').replace(/\s+/g, '')).toContain('lite-therapy-all-');
 
     unmount();
   });

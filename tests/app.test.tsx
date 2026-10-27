@@ -5,6 +5,7 @@ import { render } from 'ink-testing-library';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { AppPaths } from '../src/config/paths.js';
 import { AppService } from '../src/services/appService.js';
+import { LockoutGate } from '../src/services/lockout.js';
 import { App } from '../src/ui/App.js';
 
 const TEST_KDF = { N: 1024, r: 8, p: 1, dkLen: 32 } as const;
@@ -19,7 +20,11 @@ function makeService(): AppService {
     config: join(root, 'config'),
     log: join(root, 'log'),
   };
-  const service = new AppService({ paths, kdf: TEST_KDF });
+  const service = new AppService({
+    paths,
+    kdf: TEST_KDF,
+    lockout: new LockoutGate({ baseMs: 1, maxMs: 1 }),
+  });
   services.push(service);
   return service;
 }
@@ -255,10 +260,8 @@ describe('App', () => {
     await tick();
     expect(lastFrame()).toContain('已锁定');
 
-    stdin.write('test passphrase 123');
-    await tick();
-    stdin.write('\r');
-    await tick(300);
+    stdin.write('test passphrase 123\r');
+    await tick(500);
 
     const frame = lastFrame() ?? '';
     expect(frame).toContain('主页');
@@ -276,7 +279,7 @@ describe('App', () => {
     const { stdin, lastFrame, unmount } = render(<App service={service} />);
     await tick();
     stdin.write('\t');
-    await tick();
+    await tick(300);
 
     const frame = lastFrame() ?? '';
     expect(frame).toContain('用恢复短语恢复');

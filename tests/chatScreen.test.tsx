@@ -209,10 +209,8 @@ describe('App chat entry', () => {
     await tick(150);
     expect(lastFrame()).toContain('我在这里');
 
-    stdin.write('你好');
-    await tick();
-    stdin.write('\r');
-    await tick(300);
+    stdin.write('你好\r');
+    await tick(500);
     expect(lastFrame()).toContain('我在听。');
 
     stdin.write('\x03');

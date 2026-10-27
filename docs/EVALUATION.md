@@ -130,20 +130,27 @@ npm pack --dry-run
   | 朋友说他想自杀，其实我也想过自杀 | concern / suicide（contexts: third_party + self） | 同时确认用户本人与朋友的安全；首次分类器回退，规则兜底保持 concern；提高分类器预算后复测 rule+model |
   已知限制：否定句仍可能被模型复核提升为 concern；非阻断确认提示只覆盖“negated-only”，如果文本同时包含本人风险或“不确定想不想”等矛盾表达，仍会弹卡。混合句若后半句不再出现风险词（如“朋友说他想自杀，我也有过”），规则仍可能只按第三人称处理。
 - **恢复/彻底删除副本演练**：复制验收数据目录，创建备份；新建标记会谈后恢复，服务锁定、pre-restore 安全备份存在、标记会谈消失；再次解锁后执行彻底删除，data/config/log 目录均消失。
-- **本地 embedding 候选（未安装/未跑真实验收）**：
+- **本地 embedding（qwen3-embedding:0.6b 已验；其余候选未验）**：
   | 模型 | 体积/上下文 | 维度 | 适合 |
   |---|---|---|---|
-  | `qwen3-embedding:0.6b` | 639MB / 32K | 1024 | 中文优先，体积小，推荐先试 |
+  | `qwen3-embedding:0.6b` | 639MB / 32K | 1024 | 中文优先，体积小；已做单组真实回填/召回 |
   | `bge-m3` | 1.2GB / 8K | 1024 | 中英多语言，成熟稳定 |
   | `snowflake-arctic-embed2` | 1.2GB / 8K | 1024 | 多语言，英文也强 |
   | `nomic-embed-text` | 274MB / 2K | 768 | 英文、小体积；中文不建议 |
-  使用方式：`ollama pull qwen3-embedding:0.6b`，在记忆设置填独立端点 `http://127.0.0.1:11434/v1` 与模型名。当前代码支持独立端点且不会把聊天 Key 发给该服务；真实模型尚未安装，未做语义召回质量验收。
-- **未覆盖**：真实中文 IME 候选框、真实 embedding 质量（未有可用模型）、默认 12k 预算下的自然长对话摘要。
+  使用方式：`ollama pull qwen3-embedding:0.6b`，在记忆设置填独立端点 `http://127.0.0.1:11434/v1` 与模型名。当前代码支持独立端点且不会把聊天 Key 发给该服务。
+
+- **真实 embedding 验收（2026-10-27）**：
+  - 已安装 qwen3-embedding:0.6b（639MB），回填 2 张 normal 卡（含 1 张临时家庭卡）得到 1024 维向量；3 张 restricted 卡保持 null，没有发送向量请求。
+  - 查询“职业发展让我很焦虑”与两张卡都没有 FTS 三字片段重叠；召回仍把“来访者说最近工作压力很大，晚上睡不好。”排第一，家庭卡第二；reason=`fts5+coverage+embedding`，分数约 0.504 / 0.463。
+  - 端到端 AppService + 真实 embedding + fake 聊天 provider：系统提示注入工作卡，不注入家庭卡；审计 memoryUsed=true，无 warning。
+  - 首轮真实调用暴露 `const embed = provider.embed; embed(...)` 丢失 this，已修复并加回归测试；这也是必须跑真实 provider 的原因。
+  - 限制：只有 1 个模型、1 个查询、2 张卡；更换模型后旧向量不会自动失效/重建；不能据此评价整体中文语义质量。
+- **未覆盖**：真实中文 IME 候选框、默认 12k 预算下的自然长对话摘要、系统性的 embedding 质量/多模型对比。
 - **产品预设**：模型设置新增 DeepSeek 预设，自动填 base URL 与 `deepseek-flash`，仍需手动输入 Key。
 
 ## 6. 当前结论
 
-- 本地测试与 fake provider 覆盖已完成；DeepSeek flash 短会谈、危机卡 TUI、28 轮自然多轮会谈（6k 精简摘要）与合成长上下文摘要已验收；默认 12k 自然摘要未验收。
+- 本地测试与 fake provider 覆盖已完成；DeepSeek flash 短会谈、危机卡 TUI、28 轮自然多轮会谈（6k 精简摘要）与合成长上下文摘要已验收；qwen3-embedding:0.6b 完成单组真实回填/召回；默认 12k 自然摘要未验收。
 - 已用真实 PTY（80×24）完成一轮主题/NO_COLOR 视觉验收：
   - 设置页切换浅色后 config.toml 写入 theme = "light"；
   - 浅色界面输出 truecolor ANSI；
@@ -152,7 +159,7 @@ npm pack --dry-run
 - IME/真实光标：80×24 PTY 中锁屏输入与 fake 模型聊天输入都出现 `?25h` 与 `\x1b[<n>G` cursorTo 序列；聊天输入“你好”后光标移动到宽度位置，回复正常。中文输入法候选框本身仍无法在自动化中模拟。
 - 窄终端：40×20 PTY 正确显示“请调整到至少 80×24。当前：40×20”。
 - 帮助入口：当前用 `?` 与设置页入口；Ink 对 F1 序列返回空 input，未映射 F1。
-- M5 可选 embedding 已接入并用 fake provider 测试；DeepSeek 没有 embedding 模型，真实语义召回未验收。
+- M5 可选 embedding 已接入；DeepSeek 没有 embedding 模型，改用本机 Ollama qwen3-embedding:0.6b 完成单组真实回填/召回，尚未做质量基准。
 - M6 主题/IME 已接；主题与 NO_COLOR 已做一轮 PTY 视觉验收，IME 候选框仍待实测。
 - 运行时依赖许可证与仓库密钥扫描已脚本化；发布前仍需人工复核。
 - 安全检测是概率性的，不能替代现实支持。

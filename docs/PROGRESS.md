@@ -21,7 +21,7 @@
 ### 验证
 
 - safetyRules 新增 4 个测试：混用第三人与本人、先否定后本人、逗号后父母主语，以及“我觉得他 / 我先生”不会被“我”误切成本人；chatScreen 新增 mixed contexts 危机卡测试。
-- 39 个测试文件 / 191 个测试通过；typecheck 通过；npm run eval:safety 9/9。
+- 39 个测试文件 / 192 个测试通过；typecheck 通过；npm run eval:safety 9/9。
 - 真实 DeepSeek 输入“朋友说他想自杀，其实我也想过自杀”：返回 done，风险 concern，contexts=[third_party,self]；回复同时确认用户本人与朋友的安全，不提供方法。
 - 首次真实检查 detector=rule-fallback，规则兜底仍保持 concern；将分类器 maxTokens 从 300 提到 1000、默认超时从 8s 提到 12s 后复测 detector=rule+model。300 token 对推理模型偏紧，这次修复降低了截断 JSON 的概率，但不保证分类器永不失败。
 
@@ -48,13 +48,40 @@
 
 ### 验证
 
-- memoryService 新增“未回填时 embed 调用为 0”测试；当前 8 个测试。
-- 39 个测试文件 / 191 个测试通过；typecheck、lint 通过。
+- memoryService 新增“未回填时 embed 调用为 0”测试；后续又补了 provider 方法绑定回归，当前 9 个测试。
+- 39 个测试文件 / 192 个测试通过；typecheck、lint 通过。
 
 ### 风险
 
-- 真实 embedding 模型仍未安装，语义召回质量、维度和中文效果都未验收。
+- 真实模型已在下一节完成单模型单查询验收；这不等于质量已经系统验证。
 - 更换 embedding 模型后旧向量仍在库里；当前只是在新查询时按维度返回 0 相似度，尚未做自动失效/重建。
+
+---
+
+## 2026-10-27 — 真实 embedding 验收（qwen3-embedding:0.6b）
+
+### 配置
+
+- 使用本机 Ollama，模型 `qwen3-embedding:0.6b`（639MB），独立端点 `http://127.0.0.1:11434/v1`；聊天模型仍为 DeepSeek，本地 embedding 端点不接收聊天 API Key。
+- 验收数据目录：`.tmp/acceptance-deepseek`（临时数据，不进入仓库）。
+
+### 实测
+
+- 回填 2 张 normal 卡（其中 1 张是为排名临时插入的“家庭关系紧张”卡），均得到 1024 维向量；3 张 restricted 卡保持 `embedding=null`，没有发送向量请求。
+- 查询“职业发展让我很焦虑”与两张卡都没有 FTS 三字片段重叠；召回仍把“来访者说最近工作压力很大，晚上睡不好。”排在第一，家庭卡第二；reason 为 `fts5+coverage+embedding`，分数约 0.504 / 0.463。
+- 端到端用真实 AppService + 真实 embedding + fake 聊天 provider：ChatService 的系统提示包含“工作压力很大”卡片，不包含家庭卡；审计 `memoryUsed=true`，无 warning。
+- 验收后临时家庭卡已删除，原工作卡保留向量。
+
+### 回归
+
+- 首次真实验收直接崩溃：`const embed = provider.embed; embed(...)` 丢失了 `this`，OpenAICompatibleProvider 读不到 `this.fetchImpl`。已改回 `provider.embed(...)` 方法调用，并加 provider 内部状态绑定的回归测试。
+- memoryService 当前 9 个测试；总计 39 个文件 / 192 个测试。
+
+### 限制
+
+- 只有 1 个模型、1 个查询和 2 张卡，不能据此评价中文语义召回的整体质量。
+- 更换 embedding 模型后旧向量仍在库里；当前没有自动失效或重建，只有维度不一致时余弦返回 0。
+- 真实危机/高风险内容没有进入 embedding 验收；敏感卡仍只做 FTS。
 
 ---
 
@@ -114,7 +141,7 @@
 - **主题/NO_COLOR**：config.theme 支持 dark/light；统一 uiColor 色板；NO_COLOR 下关闭 FORCE_COLOR，连 dim 也不输出。
 - **设置/备份 TUI 测试**：主题切换持久化、备份列表打开恢复说明、Esc 返回；彻底删除警示可取消；恢复密码入口可退出；修复备份列表双 SelectList 抢 Enter 与 wipeWarning 无 Esc 的问题。
 - **IME 光标**：MultilineInput / SingleLineInput 用 Ink useCursor + measureElement 定位；宽字符列测试。
-- **验证**：appService（9）覆盖备份文件/权限、备份浏览、错误密码拒绝、恢复后的数据回退与服务锁定、彻底删除目录与 NOT_SETUP、全量 JSON 0600/无密钥；homeContext（10）覆盖全量导出密码与结果页；exportService（4）覆盖 Markdown/JSON、勾选与 0600；当前 39 个测试文件 / 191 个测试。
+- **验证**：appService（9）覆盖备份文件/权限、备份浏览、错误密码拒绝、恢复后的数据回退与服务锁定、彻底删除目录与 NOT_SETUP、全量 JSON 0600/无密钥；homeContext（10）覆盖全量导出密码与结果页；exportService（4）覆盖 Markdown/JSON、勾选与 0600；当前 39 个测试文件 / 192 个测试。
 
 ### 尚未完成（M6 剩余）
 
@@ -147,7 +174,7 @@
 - **历史版本**：008 迁移新增 memory_card_revisions；编辑记忆时记录修改前后文本，详情页可查看历史。
 - **召回评分**：FTS 候选 + 本地卡片覆盖率、FTS 排名、置信度、新鲜度与重复引用惩罚；召回日志 reason 记录 fts5+coverage。
 - **召回可解释**：记忆详情展示最近 5 次召回会谈、评分与日期。
-- **验证**：39 个测试文件 / 191 个测试；memoryService（8）覆盖提取拒绝、去重、敏感过滤、召回日志、冲突标记、历史版本、覆盖率排序、embedding 召回与普通卡回填；memoriesScreen TUI（5）覆盖来源/编辑/归档/删除/筛选/标签/清空/按会谈删除；chatService（12）覆盖召回注入与开关；sessionService（13）覆盖单次会谈关闭记忆。
+- **验证**：39 个测试文件 / 192 个测试；memoryService（9）覆盖提取拒绝、去重、敏感过滤、召回日志、冲突标记、历史版本、覆盖率排序、embedding 召回与普通卡回填；memoriesScreen TUI（5）覆盖来源/编辑/归档/删除/筛选/标签/清空/按会谈删除；chatService（12）覆盖召回注入与开关；sessionService（13）覆盖单次会谈关闭记忆。
 
 ### 修改 / 新增文件
 
@@ -159,15 +186,15 @@
 - `tests/{memoryService,memoriesScreen,exportService}.test.*`，扩展 chatService / appConfig / appService / migrations 测试
 - 更新 README / HANDOFF / AGENTS / docs/PROGRESS
 
-### 尚未完成（M5 剩余）
+### 后续验收
 
-- **语义召回（可选）**：配置 embedding 模型后，提取时批量写向量（BLOB），召回合并 FTS 与余弦；可单独配置 embedding 端点（如 Ollama），避免把聊天 Key 发给本地服务；设置页可手动回填旧 normal 卡片；敏感/受限卡不发送向量请求；未配置时回退本地覆盖率。
+- **语义召回（可选）**：代码已接提取时写向量、召回合并 FTS 与余弦、独立 embedding 端点、手动回填 normal 卡；敏感/受限卡不发送向量请求。2026-10-27 已用 qwen3-embedding:0.6b 完成单组真实回填/召回，见本文顶部；模型更换后的旧向量失效/重建仍未做。
 
 ### 已知风险
 
 - 记忆提取可能遗漏或误提取；敏感信息默认不召回，但仍会落库。
 - 召回是关键词近似，可能把旧理解带进来；当前表达优先的提示已写入上下文。
-- embedding/冲突未做，召回可能把相近但错误的旧条目带进来；当前表达优先的提示已写入上下文。
+- embedding 已接并完成单组真实验收；冲突只标记 uncertain，不自动合并，召回仍可能把相近但错误的旧条目带进来；当前表达优先的提示已写入上下文。
 
 ---
 
@@ -189,7 +216,7 @@
 - **内部记录只读页**：单次记录 / 纵向理解 / 督导 / 备忘录；警示“不是对你的结论”，PgUp/PgDn 滚动，不提供编辑。
 - **备忘录带入**：新建会谈询问是否带入最近 ready 备忘录，冻结到 memory_snapshot_json；ChatService 注入并审计 memoUsed。
 - **来信信箱**：主页未读入口、阅读页、已读标记；来信正文不进入内部记录。
-- **验证**：39 个测试文件 / 191 个测试；postSessionService（5）覆盖六任务成功、失效、备忘录失败不阻塞来信、running 重置、退避重试；postSessionScreen TUI（3）覆盖自动运行、失败重试与内部记录只读页；AppService 覆盖入队、后台共享 promise、重启解锁自动续跑与执行；断言 memo 请求包含督导意见。
+- **验证**：39 个测试文件 / 192 个测试；postSessionService（5）覆盖六任务成功、失效、备忘录失败不阻塞来信、running 重置、退避重试；postSessionScreen TUI（3）覆盖自动运行、失败重试与内部记录只读页；AppService 覆盖入队、后台共享 promise、重启解锁自动续跑与执行；断言 memo 请求包含督导意见。
 
 ### 修改 / 新增的主要文件
 
@@ -233,7 +260,7 @@
 - **脱敏审计**：每轮写入 context_audits（message_id、prompt/history token、消息数、truncated、summary/memo/memory 注入、warnings）与消息级 entries_json（角色、token、是否进入请求），不记录正文。
 - **预算设置**：AppConfig.context 暴露 history / summaryTrigger / recentTarget；设置页提供精简 / 保守 / 更长三档；ChatService 按配置注入预算。
 - **审计查看**：设置页「最近上下文审计」按会谈展示时间、token、消息数、裁剪/摘要、条目计数与警告，不显示正文。
-- **验证**：M3 完成时 32 个测试文件 / 135 个测试；当前总 39 个文件 / 191 个测试；真实 PTY + fake 模型/分类器验证危机卡出现、安全动作与会话继续；长历史/摘要失败/增量摘要/预算裁剪/审计/设置页由测试覆盖。
+- **验证**：M3 完成时 32 个测试文件 / 135 个测试；当前总 39 个文件 / 192 个测试；真实 PTY + fake 模型/分类器验证危机卡出现、安全动作与会话继续；长历史/摘要失败/增量摘要/预算裁剪/审计/设置页由测试覆盖。
 
 ### 修改 / 新增的主要文件
 
@@ -246,7 +273,7 @@
 
 ### 尚未完成（M3 收尾）
 
-- **真实模型验收**：DeepSeek 已跑短会谈、危机卡、六类会后、28 轮自然会谈、6k 精简摘要、合成摘要与安全场景；默认 12k 自然摘要、真实 embedding、分类失败与 IME 未验。
+- **真实模型验收**：DeepSeek 已跑短会谈、危机卡、六类会后、28 轮自然会谈、6k 精简摘要、合成摘要与安全场景；qwen3-embedding 已完成单组真实回填/召回。默认 12k 自然摘要、分类失败与 IME 未验。
 - **安全 UI 打磨**：锁定 / 自动锁定仍可暂时离开危机卡；解锁后只保留风险标记，不自动重开卡片。检测有漏报与误报，卡片不是保证。
 - **测试补强**：更多否定 / 影视 / 第三人称组合（已补三处混用语境）；分类模型超时、解析失败与跨轮升级的 PTY 场景；资源文件权限与损坏情况。
 - **M4 仍在进行**：会后 5/6 任务、备忘录带入、来信信箱、进度页与内部记录页已完成；常驻 worker 与记忆提取仍待做。

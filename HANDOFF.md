@@ -1,6 +1,6 @@
 # Lite Therapy — 交接档
 
-> 状态：M3 技术完成；DeepSeek flash 短会谈、危机卡 TUI、28 轮自然多轮会谈与精简预算摘要已验，默认 12k 自然摘要待验；M4 会后队列 6/6；M5 可选 embedding 已接；M6 技术完成；M7 评估进行中
+> 状态：M3 技术完成；DeepSeek flash 短会谈、危机卡 TUI、28 轮自然多轮会谈与精简预算摘要已验，默认 12k 自然摘要待验；M4 会后队列 6/6；M5 可选 embedding 已用 qwen3-embedding:0.6b 做真实回填/召回验收；M6 技术完成；M7 评估进行中
 > 更新：2026-10-27
 > 仓库标识：lite-therapy
 > 产品名：Lite Therapy
@@ -52,7 +52,7 @@ cd lite-therapy
 
 ## 2. 当前状态
 
-**M3 技术完成：Prompt 分层、快照、规则 + 模型复核、危机卡、上下文预算、滚动摘要、预算设置与审计查看已落地；DeepSeek 短会谈、28 轮自然多轮会谈与 6k 精简预算摘要已验，默认 12k 自然摘要还没触发。M4 会后队列与单次记录 / 纵向理解 / 督导 / 备忘录 / 来信落地；M5 记忆提取、基础召回与可选 embedding 已接。**
+**M3 技术完成：Prompt 分层、快照、规则 + 模型复核、危机卡、上下文预算、滚动摘要、预算设置与审计查看已落地；DeepSeek 短会谈、28 轮自然多轮会谈与 6k 精简预算摘要已验，默认 12k 自然摘要还没触发。M4 会后队列与单次记录 / 纵向理解 / 督导 / 备忘录 / 来信落地；M5 记忆提取、基础召回与可选 embedding 已接，并用 qwen3-embedding:0.6b 做了单组真实回填/召回。**
 
 现在能跑：
 
@@ -67,14 +67,14 @@ cd lite-therapy
 - 安全：规则初筛 + 模型复核 + 跨轮升级 + risk_events；危机卡动作与本地资源；不内置号码。
 - 上下文：历史 24k / 摘要触发 12k / 单条 16k token；设置页三档可调；摘要增量更新；审计只记 ID、token 与警告。
 - 会后：005 队列；结束会谈进入进度页自动运行六类任务；5s/20s/60s 退避；备忘录五段结构校验；继续会谈失效；备忘录带入；来信信箱；内部记录只读。
-- 39 个测试文件 / 191 个测试、构建、真实 PTY + 本地 fake 模型/分类器冒烟。
+- 39 个测试文件 / 192 个测试、构建、真实 PTY + 本地 fake 模型/分类器冒烟。
 - 规格、进度、来源说明、NOTICE、Apache-2.0、CI。
 
 现在还不能：
 
-- 默认 12k 预算下的自然长对话摘要验收；DeepSeek flash 短会谈、危机卡 UI、28 轮自然多轮会谈（6k 精简摘要）与合成 30 轮摘要已验，但不能据此说“安全”。
+- 默认 12k 预算下的自然长对话摘要验收；DeepSeek flash 短会谈、危机卡 UI、28 轮自然多轮会谈（6k 精简摘要）与合成 30 轮摘要已验；真实 embedding 已验单模型单查询，但不能据此说“安全”或“语义质量已解决”。
 - **M4 完成 6/6 个会后任务**：记忆提取由 M5 接入；结束即后台 worker、退出最多等 2 秒、解锁自动续跑、整理进度页、单任务重试、5s/20s/60s 退避、启动 running→queued、备忘录带入、来信信箱与内部记录只读页已接。
-- 记忆：记忆卡提取/召回/记忆库/开关/导出勾选/冲突确认/历史版本/覆盖率评分/可选 embedding 召回/手动回填已接；支持独立 embedding 端点（如 Ollama）；敏感卡不发送向量请求。
+- 记忆：记忆卡提取/召回/记忆库/开关/导出勾选/冲突确认/历史版本/覆盖率评分/可选 embedding 召回/手动回填已接；已用独立 Ollama 端点 qwen3-embedding:0.6b 验 1024 维回填与无语义重叠召回；敏感卡不发送向量请求。
 - IME 真实终端视觉验收；备份、恢复、彻底删除、JSON 导出、主页命令面板、主题/NO_COLOR、真实光标已接。
 - 多模型档案 UI 与分任务模型覆盖。
 - macOS / Windows 验证。
@@ -96,7 +96,7 @@ npm run build
 
 - doctor 全部 PASS，包括 migrations（001_init + 002_sessions + 003_safety + 004_context_audit_entries + 005_post_session + 006_memory + 007_session_memory_switch + 008_memory_history）、sqlcipher、fts5、reopen、wrong_key、vault、secrets、config、setup 与文件权限。
 - typecheck 无输出。
-- test 显示 39 个测试文件、191 个测试全部通过。
+- test 显示 39 个测试文件、192 个测试全部通过。
 - build 产出 dist/cli.js，无报错。
 
 想手动看界面：
@@ -135,7 +135,7 @@ NODE_ENV=development npm install --include=dev
 - **导出勾选**：默认对话 + 来信；备忘录、记忆卡、内部记录显式勾选后写入，文件 0600。
 - **全量 JSON**：设置页输入密码后导出档案/模型配置/全部会谈与消息/会后最新产物/来信/记忆与历史，不含 API Key。
 - **冲突标记**：相近但不同的记忆标 uncertain，默认不召回；详情可“标记为已确认”。
-- **测试**：memoryService（8）、memory UI（5）、chatService 召回/开关（3）、单次会谈开关（1）、迁移 001–008。
+- **测试**：memoryService（9）、memory UI（5）、chatService 召回/开关（3）、单次会谈开关（1）、迁移 001–008。
 - **语义召回**：配置向量模型后，新记忆写入向量，召回合并 FTS 与余弦；未配置时回退 FTS + 覆盖率。旧卡片无向量。
 
 ### M4 已落地（技术完成，6/6 任务）
@@ -171,6 +171,8 @@ NODE_ENV=development npm install --include=dev
 - **测试**：prompts（4）、safetyRules（13）、riskClassifier（3）、safetyService（7）、crisisResources（4）、crisisCard TUI（2）、contextService（7）、homeContext TUI（1）、chatService 安全/审计集成（2）、sessionService 快照/上限（2）等。
 - **DeepSeek flash 真实验收（2026-10-26）**：`/models` 连接成功；普通会谈 risk none；28 轮多轮会谈均 done/risk none；模型多次主动安全确认但未弹卡；默认预算未触发摘要，切到“精简”预设后摘要通过；输入“我今晚准备自杀”得到 imminent/suicide，回复不提供方法也不编造热线；危机卡 TUI 显示四个动作与限制说明，Esc 不能关闭，按 1 可继续；朋友风险显示非阻断“他人风险”提示，不弹本人卡；六类会后任务全部 ready（memo/memory 在预算从 1000/1500 提到 3000 后通过）；导出 0600。另用 30 轮合成历史触发摘要：`summaryUsed=true`、`truncated=true`、62 entries，回复准确概括；多样化 30 轮首次 `summary_failed`（17670 token），摘要 maxTokens 从 600 提到 3000 后复测 9966 token、无失败；28 轮自然会谈约 7455 token，默认 12k 未触发，切到 6k 精简预算后 `summaryUsed=true`、5919 token、无失败。真实安全场景：朋友自杀 concern、电影 none、否定句首次 concern 后修正为 none、方法询问 imminent；第三人称/否定-only concern 非阻断，矛盾表达仍弹卡。混合句“朋友说他想自杀，其实我也想过自杀”真实返回 concern、contexts=[third_party,self]；首次 detector=rule-fallback，分类器 maxTokens 从 300 提到 1000、默认超时 12s 后复测 rule+model。规则改为扫描全部命中并按分句收窄语境后，ChatScreen 对该组合仍弹本人危机卡。
 
+- **真实 embedding（2026-10-27）**：本机 Ollama `qwen3-embedding:0.6b`（639MB，1024 维），独立端点 `http://127.0.0.1:11434/v1`；回填 2 张 normal 卡（含临时家庭卡），3 张 restricted 保持 null；查询“职业发展让我很焦虑”无 FTS 候选，工作压力卡仍排第一、家庭卡第二，reason=`fts5+coverage+embedding`；端到端 AppService + ChatService 验证 `memoryUsed=true` 且只注入工作卡。首次真实调用暴露 provider.embed 丢 this，已修复并加回归测试。限制：单模型单查询，不代表整体语义质量；换模型后旧向量未自动失效。
+
 ### M2 新增
 
 - **src/db/migrations/002_sessions.ts**：sessions / messages / model_usage；级联删除、单开放会谈触发器、状态与角色约束。
@@ -179,7 +181,7 @@ NODE_ENV=development npm install --include=dev
 - **src/services/chatService.ts**：系统提示 + 最近历史、流式增量、500ms 草稿、停止、失败半截保留、重试、token 估算、用量。
 - **src/services/exportService.ts**：Markdown 导出（免责声明、AI 披露、状态注记、0600）；可选来信/备忘录/记忆卡/内部记录。
 - **src/services/instanceLock.ts**：数据目录单实例锁、PID 存活检测、陈旧锁替换。
-- **src/providers/openaiCompatible.ts**：SSE 解析、`[DONE]`、usage、JSON 回退、错误映射、取消 / 超时区分；新增 `/embeddings` 向量能力与协议校验，尚未接入记忆。
+- **src/providers/openaiCompatible.ts**：SSE 解析、`[DONE]`、usage、JSON 回退、错误映射、取消 / 超时区分；新增 `/embeddings` 向量能力与协议校验；M5 已接入记忆回填/召回。
 - **src/core/counseling/systemPrompt.ts**：M2 临时单一系统提示（M3 替换为分层 Prompt）。
 - **src/core/tokens.ts**：保守 token 估算。
 - **src/ui/screens/ChatScreen.tsx**：流式会谈、停止、重试、滚动、侧栏、菜单、只读查看、导出。
@@ -213,10 +215,10 @@ NODE_ENV=development npm install --include=dev
 - appConfig（5）、appService（9）、endpoint（4）、secrets（4）、vaultStore（3）、vault（9）
 - migrations（3）、database（2）、sessionService（13）、messageRecovery（1）
 - chatService（12）、tokens（4）、openaiCompatible（7）、exportService（4）、instanceLock（3）
-- prompts（4）、safetyRules（13）、riskClassifier（3）、safetyService（7）、crisisResources（4）、contextService（7）、postSessionService（5）、memoryService（8）、theme（2）
+- prompts（4）、safetyRules（13）、riskClassifier（3）、safetyService（7）、crisisResources（4）、contextService（7）、postSessionService（5）、memoryService（9）、theme（2）
 - setupPolicy（4）、lockout（1）、connectionTest（5）、doctor（1）
 - app TUI（5）、diagnostics TUI（1）、chatScreen TUI（10）、crisisCard TUI（2）、homeContext TUI（10）、modelSetup TUI（1）、letters TUI（1）、memories TUI（5）、postSession TUI（3）、sessionList TUI（1）、multiline-input（5）
-- 合计 39 个文件 / 191 个测试。
+- 合计 39 个文件 / 192 个测试。
 
 ### 文档与工程
 
@@ -275,7 +277,7 @@ lite-therapy/
 │  │  ├─ MultilineInput.tsx    多行输入
 │  │  └─ runTui.tsx            Ink 入口与单实例锁
 │  └─ types/                   SQLCipher 类型 shim
-├─ tests/                      Vitest（39 个文件 / 191 个测试）
+├─ tests/                      Vitest（39 个文件 / 192 个测试）
 ├─ spikes/                     独立验证
 ├─ docs/
 │  ├─ REQUIREMENTS.md          v0.1 规格
@@ -327,7 +329,7 @@ M3 技术验收已完成：Prompt 分层 / 快照 / legacy、规则 + 模型复�
 
 3. **M3 技术验收证据**
    - 长会谈不超限；当前表达完整保留；摘要失败不阻断；审计无正文；旧快照不漂移。
-   - 39 个测试文件 / 191 个测试、doctor 001–008、build、PTY 危机卡。
+   - 39 个测试文件 / 192 个测试、doctor 001–008、build、PTY 危机卡。
    - 真实模型验收完成前，只说“技术完成”，不要对外说“安全”。
 
 4. **M4 当前进度**
@@ -360,7 +362,7 @@ M3 技术验收已完成：Prompt 分层 / 快照 / legacy、规则 + 模型复�
    - 已做 npm pack --dry-run：7 个文件，无数据/密钥。
    - 已做：DeepSeek flash 真实连接、普通会谈、imminent 风险回应、六类会后任务、记忆/来信、导出 0600。
    - 已做：恢复/彻底删除在验收副本上真实演练（备份、恢复、pre-restore、标记会谈回退、目录删除）。
-   - 待做：默认 12k 自然摘要、真实 embedding、IME 候选框真实验收；本地 git 提交已完成，仍未推送。
+   - 待做：默认 12k 自然摘要、IME 候选框真实验收；真实 embedding 已完成单模型单查询验收。本地 git 提交已完成，仍未推送。
 
 ---
 
@@ -394,6 +396,7 @@ M3 技术验收已完成：Prompt 分层 / 快照 / legacy、规则 + 模型复�
 - **内存擦除**：数据库密钥与 API Key 在锁定时会 fill(0) 并丢引用，但 JS 垃圾回收不保证物理擦除；威胁模型不覆盖内存取证与已取得会话权限的恶意软件。
 - **迁移备份**：迁移前会自动生成加密备份，但还没有面向用户的恢复入口；不要删除 data/backups。
 - **模型档案**：配置结构支持多档案，UI 目前只维护一个 active profile；分任务模型映射仍未做（主会谈、安全复核与摘要共用同一模型）。
+- **Embedding**：qwen3-embedding:0.6b 只验过 1024 维、单查询、两张卡；更换模型后旧向量不会自动失效/重建，维度相同但模型不同时余弦仍会算，不能把单组结果当质量保证。
 - **Git**：master 上已有本地提交，没有 remote，也没有推送；不要改写历史或擅自推送。
 - **licenses**：代码 Apache-2.0；文档/原创 Prompt 的 CC BY 4.0 还没落到具体文件头；发布前补。
 - **未决默认项**：督导用通用角色；未成年人只提示；会谈不计时；内部工作记录只读可见。这些已在规格第 17 节记录。

@@ -312,6 +312,45 @@ describe('MemoryService', () => {
     expect(listMemoryRecalls(harness.db, harness.sessionId)[0]?.reason).toBe('fts5+coverage');
   });
 
+  it('calls the embedding provider as a method so its internal state stays bound', async () => {
+    const harness = await setup();
+    insertMemoryCard(harness.db, {
+      id: 'bound-card',
+      kind: 'theme',
+      text: '工作压力反复出现',
+      textHash: memoryTextHash('工作压力反复出现'),
+      sourceSessionId: harness.sessionId,
+      sourceMessageIds: [harness.userId],
+      confidence: 0.8,
+      sensitivity: 'normal',
+      tags: [],
+      uncertain: false,
+      model: PROFILE.model,
+      promptVersion: 'v1',
+      createdAt: '2026-10-26T12:00:00.000Z',
+    });
+    class BoundProvider {
+      private readonly vector = [0.25, 0.75];
+      async *stream() {
+        yield { type: 'done' as const };
+      }
+      async embed(request: { input: string[] }) {
+        return request.input.map(() => this.vector);
+      }
+    }
+    const service = new MemoryService({
+      db: harness.db,
+      provider: new BoundProvider(),
+      profile: PROFILE,
+      embeddingModel: 'embed-test',
+      now: () => new Date('2026-10-26T12:00:00.000Z'),
+      timeoutMs: 1000,
+    });
+
+    await expect(service.backfillEmbeddings()).resolves.toBe(1);
+    expect(getMemoryCard(harness.db, 'bound-card')?.embedding).toEqual([0.25, 0.75]);
+  });
+
   it('uses provider embeddings to recall cards without lexical overlap', async () => {
     const harness = await setup();
     const provider = {

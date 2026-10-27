@@ -4,7 +4,7 @@
 
 ## 项目
 
-Lite Therapy 是一个本地优先的 AI 心理咨询 TUI。当前处于 M7 评估进行、M4 会后队列 6/6（技术完成）、M5 可选 embedding 已接、M6 技术完成、M3 技术完成且 DeepSeek flash 短会谈、28 轮自然多轮会谈与 6k 精简摘要已验（默认 12k 自然摘要、真实 embedding 待验）的状态：Prompt 分层与快照、安全规则、模型复核、危机卡、上下文预算、滚动摘要、预算设置与审计查看已落地；会后单次记录、纵向理解、督导、备忘录、来信、整理进度、内部记录与记忆提取/召回/记忆库/记忆设置/单次会谈开关/历史版本已接。安全检测是概率性的，不是保证。
+Lite Therapy 是一个本地优先的 AI 心理咨询 TUI。当前处于 M7 评估进行、M4 会后队列 6/6（技术完成）、M5 可选 embedding 已用 qwen3-embedding:0.6b 做单组真实回填/召回、M6 技术完成、M3 技术完成且 DeepSeek flash 短会谈、28 轮自然多轮会谈与 6k 精简摘要已验（默认 12k 自然摘要待验）的状态：Prompt 分层与快照、安全规则、模型复核、危机卡、上下文预算、滚动摘要、预算设置与审计查看已落地；会后单次记录、纵向理解、督导、备忘录、来信、整理进度、内部记录与记忆提取/召回/记忆库/记忆设置/单次会谈开关/历史版本已接。安全检测是概率性的，不是保证。
 
 ## 开始前
 
@@ -107,6 +107,8 @@ export XDG_CACHE_HOME="$PWD/.cache"
 - 会后任务不要记录或打印会谈正文；错误信息截断。备忘录只有通过五段结构校验才写 ready。
 - 记忆卡来源必须在当前会谈消息 ID 集合中；不要为了让提取“成功”放宽来源校验。
 - 记忆可配置独立 embedding 端点（`memory.embeddingBaseUrl`）；独立端点时不要发送聊天 API Key。更新记忆设置必须保留 embeddingModel/embeddingBaseUrl，否则会静默丢失配置。
+- `provider.embed` 必须作为方法调用（`provider.embed(...)`），不要先解构再单独调用；OpenAICompatibleProvider 会读 `this.fetchImpl`，解构会丢绑定并在真实调用时崩溃。
+- 真实 embedding 只用 qwen3-embedding:0.6b 验过 1024 维、单查询、两张卡；更换模型后旧向量不会自动失效，维度相同但模型不同时余弦仍会算，别把单组结果当质量保证。
 - 编辑记忆会写 memory_card_revisions（008）；历史文本是敏感数据，仍只存在本机。
 - 记忆库 UI 在 src/ui/screens/MemoriesScreen.tsx：编辑/归档/删除只动本机卡片；全局关闭后 ChatService 不召回，但卡片仍保留。
 - 备份/恢复在 AppService.createBackup / restoreBackup：备份用 VACUUM INTO + vault/config 复制，不含 secrets.enc；恢复前生成 pre-restore 安全备份并锁屏。

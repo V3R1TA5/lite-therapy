@@ -210,11 +210,12 @@ export class MemoryService {
         : this.embeddingApiKey === null
           ? undefined
           : this.embeddingApiKey;
-    const embed = runtime.provider.embed;
-    if (embed === undefined) {
+    const provider = runtime.provider;
+    if (provider.embed === undefined) {
       throw new Error('没有配置向量模型。');
     }
-    return await embed({
+    // 必须作为方法调用，provider 内部会读 this.fetchImpl。
+    return await provider.embed({
       profile: runtime.profile,
       model: this.embeddingModel,
       input,

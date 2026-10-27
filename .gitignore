@@ -10,5 +10,6 @@ coverage/
 *.db-wal
 vault.json
 secrets.enc
+auto-unlock.key
 .env
 .DS_Store

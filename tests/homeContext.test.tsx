@@ -341,6 +341,7 @@ describe('Home context settings', () => {
     stdin.write('http://127.0.0.1:11434/v1\r');
     await tick(300);
     expect(service.getConfig()?.memory.embeddingBaseUrl).toBe('http://127.0.0.1:11434/v1');
+    expect(lastFrame()).toContain('模型或端点变化会清空旧向量');
 
     unmount();
   });

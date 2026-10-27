@@ -901,11 +901,17 @@ export function HomeScreen(props: HomeScreenProps) {
             value={memoryEmbeddingInput}
             onChange={setMemoryEmbeddingInput}
             onSubmit={(value) => {
+              const nextModel = value.trim();
+              const changed = nextModel !== config.memory.embeddingModel;
               void service
-                .updateMemorySettings({ ...config.memory, embeddingModel: value.trim() })
+                .updateMemorySettings({ ...config.memory, embeddingModel: nextModel })
                 .then((updated) => {
                   onConfigChange(updated);
-                  setNotice(messages.settings.memoryEmbeddingSaved);
+                  setNotice(
+                    changed
+                      ? messages.settings.memoryEmbeddingChanged
+                      : messages.settings.memoryEmbeddingSaved,
+                  );
                   setView('memorySettings');
                 })
                 .catch((saveError: unknown) => {
@@ -933,14 +939,20 @@ export function HomeScreen(props: HomeScreenProps) {
             value={memoryEmbeddingBaseUrlInput}
             onChange={setMemoryEmbeddingBaseUrlInput}
             onSubmit={(value) => {
+              const nextBaseUrl = value.trim();
+              const changed = nextBaseUrl.replace(/\/+$/, '') !== config.memory.embeddingBaseUrl;
               void service
                 .updateMemorySettings({
                   ...config.memory,
-                  embeddingBaseUrl: value.trim(),
+                  embeddingBaseUrl: nextBaseUrl,
                 })
                 .then((updated) => {
                   onConfigChange(updated);
-                  setNotice(messages.settings.memoryEmbeddingSaved);
+                  setNotice(
+                    changed
+                      ? messages.settings.memoryEmbeddingChanged
+                      : messages.settings.memoryEmbeddingSaved,
+                  );
                   setView('memorySettings');
                 })
                 .catch((saveError: unknown) => {

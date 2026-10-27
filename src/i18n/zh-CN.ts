@@ -525,6 +525,7 @@ export const messages = {
       '可填本地 Ollama 的 OpenAI 兼容地址，例如 http://127.0.0.1:11434/v1。留空则复用当前聊天模型端点。使用独立地址时不会把聊天 API Key 发给该服务。',
     memoryEmbeddingBaseUrlPlaceholder: 'http://127.0.0.1:11434/v1',
     memoryEmbeddingSaved: '向量模型设置已更新。',
+    memoryEmbeddingChanged: '设置已更新；模型或端点变化会清空旧向量，请回填旧记忆向量。',
     memoryBackfill: '回填旧记忆向量',
     memoryBackfillDone: (count: number) => '已回填 ' + count + ' 条记忆的向量。',
     memoryBackfillNone: '没有需要回填的普通记忆，或还没有配置向量模型。',

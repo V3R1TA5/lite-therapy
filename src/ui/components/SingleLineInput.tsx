@@ -94,18 +94,15 @@ export function SingleLineInput(props: SingleLineInputProps) {
       // Windows/自动化可能把文本和回车放在同一个 input 块里，同时把 key.return 设为 true。
       // 必须先消费块内文本，否则提交的是上一帧的 value（常见表现是空密码或空消息）。
       const newlineIndex = input.search(/[\r\n]/);
-      if (newlineIndex >= 0) {
-        const typed = input.slice(0, newlineIndex);
+      if (newlineIndex >= 0 || key.return) {
+        // 有的平台把回车从 input 中剥离，只留下 key.return；有文本时也要一起提交。
+        const typed = newlineIndex >= 0 ? input.slice(0, newlineIndex) : input;
         const next = value.slice(0, cursor) + typed + value.slice(cursor);
         if (typed.length > 0) {
           onChange(next);
           setCursor(cursor + typed.length);
         }
         onSubmit(next);
-        return;
-      }
-      if (key.return) {
-        onSubmit(value);
         return;
       }
       if (key.escape) {

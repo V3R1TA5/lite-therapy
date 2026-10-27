@@ -132,6 +132,7 @@ npm pack --dry-run
   | 朋友说他想自杀，其实我也想过自杀 | concern / suicide（contexts: third_party + self） | 同时确认用户本人与朋友的安全；首次分类器回退，规则兜底保持 concern；提高分类器预算后复测 rule+model |
   | 朋友说他想自杀，我也有过 | concern / suicide（contexts: third_party + self） | 没有重复风险词也保留本人续接；真实复测 rule+model，回复追问是过去还是现在 |
   | 朋友说他想自杀，我也想过要报警 | concern / suicide（contexts: third_party） | 求助行动不应被误判为本人风险；真实复测无 self，TUI 走第三人称非阻断提示 |
+  | 朋友说他想自杀，我另一个朋友也想过 | concern / suicide（contexts: third_party） | 第二个“朋友”仍是第三人称；真实复测无 self，规则未误切本人 |
   已知限制：否定句仍可能被模型复核提升为 concern；非阻断确认提示只覆盖“negated-only”，如果文本同时包含本人风险或“不确定想不想”等矛盾表达，仍会弹卡。混合句已覆盖“我也有过/我也想过”等明确续接，但省略主语或更隐晦的表达仍可能只按第三人称处理。
 - **恢复/彻底删除副本演练**：复制验收数据目录，创建备份；新建标记会谈后恢复，服务锁定、pre-restore 安全备份存在、标记会谈消失；再次解锁后执行彻底删除，data/config/log 目录均消失。
 - **本地 embedding（qwen3-embedding:0.6b 已验；其余候选未验）**：

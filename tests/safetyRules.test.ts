@@ -74,6 +74,9 @@ describe('safety rules', () => {
     expect(historical.matches.some((match) => match.context === 'self')).toBe(true);
     expect(scanRiskText('朋友说他想自杀，我也有同样的想法').level).toBe('concern');
     expect(scanRiskText('朋友说他想自杀，我也有同样的疑问').level).toBe('none');
+    expect(scanRiskText('朋友说他想自杀，我另一个朋友也想过').level).toBe('none');
+    expect(scanRiskText('朋友说他想自杀，我妈妈也想过').level).toBe('none');
+    expect(scanRiskText('朋友说他想自杀，我最近也想过').level).toBe('concern');
     const multiple = scanRiskText('朋友说他想自杀，我也有过。另一个朋友说他也想死');
     expect(multiple.level).toBe('concern');
     expect(multiple.matches.some((match) => match.context === 'self')).toBe(true);

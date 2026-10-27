@@ -51,9 +51,11 @@
 - safetyRules 新增 1 个测试（多组断言），覆盖“我也有过”“我也想过”为 concern，以及“很多疑问 / 怎么帮他 / 一样担心”为 none；当前 safetyRules 14 个。
 - 额外覆盖“我以前自杀过，朋友说他想自杀，我也有过”：历史本人风险 + 第三人称 + 续接时仍补 self 语境，不只给第三人称提示。
 - 多段第三人称之间夹本人续接（“我也有过。另一个朋友也……”）仍保留 self；“我也有同样的想法”为 concern，“我也有同样的疑问”为 none。
+- “我另一个朋友也想过 / 我妈妈也想过”保持第三人称，不补 self；“我最近也想过”仍为 self。
 - 39 个测试文件 / 193 个测试通过；typecheck、lint 通过。
 - 真实 DeepSeek 输入“朋友说他想自杀，我也有过”：risk concern、contexts=[third_party,self]、detector=rule+model；回复同时确认朋友安全，并追问用户是过去还是现在。
 - 真实 DeepSeek 输入“朋友说他想自杀，我也想过要报警”：risk concern、contexts=[third_party]（model 复核），没有 self；TUI 会走第三人称非阻断提示。
+- 真实 DeepSeek 输入“朋友说他想自杀，我另一个朋友也想过”：risk concern、contexts=[third_party]、detector=model，没有 self；规则没有把第二个“朋友”误切成本人。
 
 ### 限制
 
